@@ -1,16 +1,22 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
+import { jwtConfig, IJwtConfig } from '../jwt.config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_ACCESS_SECRET || 'dev_access_secret',
-      signOptions: {
-        expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '1h') as StringValue,
-      },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (config: IJwtConfig) => ({
+        secret: config.accessSecret,
+        signOptions: {
+          expiresIn: config.accessExpiresIn as StringValue,
+        },
+      }),
+      inject: [jwtConfig.KEY],
     }),
   ],
   controllers: [AuthController],
