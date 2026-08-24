@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-// import {Roles} from '........'
+import { Roles } from '../users.enums';
 
 @Entity('users')
 export class User {
@@ -32,12 +32,10 @@ export class User {
 
   @Column({
     type: 'enum',
-    enum: [
-      /* Roles.USER, Roles.ADMIN */
-    ],
-    default: 'user',
+    enum: Roles,
+    default: Roles.USER,
   })
-  role!: string;
+  role!: Roles;
 
   // @OneToMany(() => Skill, skill => skill.user) - Skill пока не создан, поэтому закомментировал
   skills!: string[];
