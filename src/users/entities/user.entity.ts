@@ -9,8 +9,8 @@ import {
 } from 'typeorm';
 import { Category } from '../../categories/entities/category.entity';
 import { UserGender } from '../../common/enums/user-gender.enum';
-import { UserRole } from '../../common/enums/user-role.enum';
 import { Skill } from '../../skills/entities/skill.entity';
+import { Roles } from '../users.enums';
 
 @Entity('users')
 export class User {
@@ -42,8 +42,12 @@ export class User {
   @Column({ type: 'varchar', length: 255, default: '' })
   avatar!: string;
 
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
-  role!: UserRole;
+  @Column({
+    type: 'enum',
+    enum: Roles,
+    default: Roles.USER,
+  })
+  role!: Roles;
 
   @OneToMany(() => Skill, (skill) => skill.owner)
   skills!: Skill[];

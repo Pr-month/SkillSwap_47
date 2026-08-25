@@ -10,10 +10,10 @@ import type { StringValue } from 'ms';
 import { DataSource, QueryFailedError } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
-import { UserRole } from '../common/enums/user-role.enum';
 import { IJwtConfig, jwtConfig } from '../jwt.config';
 import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
+import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -87,7 +87,7 @@ export class AuthService {
           city: city.name,
           gender: dto.gender,
           avatar: '',
-          role: UserRole.USER,
+          role: Roles.USER,
           refreshToken: null,
         });
         const savedUser = await manager.save(user);
@@ -109,7 +109,7 @@ export class AuthService {
         return savedUser.id;
       });
 
-      const tokens = await this.issueTokens(userId, email, UserRole.USER);
+      const tokens = await this.issueTokens(userId, email, Roles.USER);
       const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, 10);
       await this.usersService.updateRefreshToken(userId, refreshTokenHash);
 
@@ -133,7 +133,7 @@ export class AuthService {
     }
   }
 
-  private async issueTokens(userId: string, email: string, role: UserRole) {
+  private async issueTokens(userId: string, email: string, role: Roles) {
     const payload = { sub: userId, email, role };
 
     const [accessToken, refreshToken] = await Promise.all([
