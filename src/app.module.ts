@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { databaseConfig } from './db.config';
-import { appConfig } from './app.config';
-import { jwtConfig } from './jwt.config';
 import { AppController } from './app.controller';
+import { appConfig } from './app.config';
 import { AppService } from './app.service';
-import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
+import { CitiesModule } from './cities/cities.module';
+import { databaseConfig } from './db.config';
+import { GendersModule } from './genders/genders.module';
+import { jwtConfig } from './jwt.config';
+import { SkillsModule } from './skills/skills.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -21,6 +25,10 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsersModule,
     AuthModule,
+    CitiesModule,
+    CategoriesModule,
+    GendersModule,
+    SkillsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

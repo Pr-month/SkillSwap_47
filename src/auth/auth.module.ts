@@ -2,12 +2,18 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import type { StringValue } from 'ms';
-import { jwtConfig, IJwtConfig } from '../jwt.config';
-import { AuthService } from './auth.service';
+import { CategoriesModule } from '../categories/categories.module';
+import { CitiesModule } from '../cities/cities.module';
+import { IJwtConfig, jwtConfig } from '../jwt.config';
+import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 
 @Module({
   imports: [
+    UsersModule,
+    CitiesModule,
+    CategoriesModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: IJwtConfig) => ({
