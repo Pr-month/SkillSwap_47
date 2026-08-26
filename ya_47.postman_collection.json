@@ -1,0 +1,96 @@
+{
+  "info": {
+    "_postman_id": "abc731c2-5ca9-4cff-986e-d6051ae58eb9",
+    "name": "ya_47",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "19484609"
+  },
+  "item": [
+    {
+      "name": "get_genders",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/genders",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "genders"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get_ cities",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/cities",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "cities"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get_ categories",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/categories",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "categories"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "post_ register",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"alex.sport@mail.com\",\n  \"password\": \"secret123\",\n  \"name\": \"Алексей\",\n  \"birthdate\": \"1998-04-12\",\n  \"gender\": \"male\",\n  \"city\": \"Москва\",\n  \"wantToLearn\": {\n    \"categoryId\": \"f20a685b-a5f6-44e0-956c-5d48a4a2cbf5\",\n    \"subcategoryId\": \"1cdbe8e4-343e-4af5-96cf-6c3682fadcfb\"\n  },\n  \"skill\": {\n    \"title\": \"Силовые тренировки\",\n    \"categoryId\": \"a8e60d8e-128d-4b95-83fa-00660f9415a8\",\n    \"subcategoryId\": \"f75bbe34-4ccd-44c8-89b3-705da50fc05b\",\n    \"description\": \"Постановлю базовую технику и программу на месяц\",\n    \"images\": []\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/auth/register",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "auth",
+            "register"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

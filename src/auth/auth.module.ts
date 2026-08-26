@@ -3,9 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import type { StringValue } from 'ms';
-import { jwtConfig, IJwtConfig } from '../jwt.config';
-import { AuthService } from './auth.service';
+import { CategoriesModule } from '../categories/categories.module';
+import { CitiesModule } from '../cities/cities.module';
+import { IJwtConfig, jwtConfig } from '../jwt.config';
+import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -22,6 +25,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       }),
       inject: [jwtConfig.KEY],
     }),
+    UsersModule,
+    CitiesModule,
+    CategoriesModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtAuthGuard],

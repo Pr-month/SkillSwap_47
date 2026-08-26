@@ -1,4 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Exclude } from 'class-transformer';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Category } from '../../categories/entities/category.entity';
+import { UserGender } from '../../common/enums/user-gender.enum';
+import { Skill } from '../../skills/entities/skill.entity';
 import { Roles } from '../users.enums';
 
 @Entity('users')
@@ -12,11 +23,12 @@ export class User {
   @Column({ type: 'varchar', length: 128, unique: true })
   email!: string;
 
+  @Exclude()
   @Column({ type: 'varchar', length: 255 })
   password!: string;
 
   @Column({ type: 'text', nullable: true })
-  about!: string;
+  about!: string | null;
 
   @Column({ type: 'date' })
   birthdate!: string;
@@ -24,10 +36,10 @@ export class User {
   @Column({ type: 'varchar', length: 64 })
   city!: string;
 
-  @Column({ type: 'varchar', length: 16 })
-  gender!: string;
+  @Column({ type: 'enum', enum: UserGender })
+  gender!: UserGender;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, default: '' })
   avatar!: string;
 
   @Column({
@@ -37,15 +49,26 @@ export class User {
   })
   role!: Roles;
 
-  // @OneToMany(() => Skill, skill => skill.user) - Skill пока не создан, поэтому закомментировал
-  skills!: string[];
+  @OneToMany(() => Skill, (skill) => skill.owner)
+  skills!: Skill[];
 
-  @Column({ type: 'varchar', length: 255 })
-  refreshToken!: string;
+  @Exclude()
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  refreshToken!: string | null;
 
-  // @OneToMany(() => Category, category => category.wantToLearn) - Category пока не создан, поэтому закомментировал
-  wantToLearn!: string[];
+  @ManyToMany(() => Category)
+  @JoinTable({
+    name: 'users_want_to_learn',
+    joinColumn: { name: 'usersId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'categoriesId', referencedColumnName: 'id' },
+  })
+  wantToLearn!: Category[];
 
-  @Column({ type: 'simple-array', nullable: true })
-  favoriteSkills!: string[];
+  @ManyToMany(() => Skill)
+  @JoinTable({
+    name: 'users_favorite_skills',
+    joinColumn: { name: 'usersId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'skillsId', referencedColumnName: 'id' },
+  })
+  favoriteSkills!: Skill[];
 }
