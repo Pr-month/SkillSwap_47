@@ -77,9 +77,7 @@ export class AuthService {
     });
 
     const accessMaxAgeMs = this.parseExpiresInToMs(this.jwt.accessExpiresIn);
-    const refreshMaxAgeMs = this.parseExpiresInToMs(
-      this.jwt.refreshExpiresIn,
-    );
+    const refreshMaxAgeMs = this.parseExpiresInToMs(this.jwt.refreshExpiresIn);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
@@ -102,6 +100,15 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async logout(userId: string, res: Response) {
+    await this.usersRepository.update(userId, { refreshToken: null });
+
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return { message: 'Успешный выход' };
   }
 
   create(createAuthDto: CreateAuthDto) {

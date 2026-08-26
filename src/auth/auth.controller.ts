@@ -8,7 +8,9 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   Res,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
@@ -18,6 +20,8 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtPayload } from './auth.types';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +43,16 @@ export class AuthController {
   )
   login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     return this.authService.login(loginDto, res);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  logout(
+    @Req() req: { user: Pick<JwtPayload, 'sub'> },
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.logout(req.user.sub, res);
   }
 
   @Post()
