@@ -13,6 +13,7 @@ describe('AuthController', () => {
           provide: AuthService,
           useValue: {
             register: jest.fn(),
+            login: jest.fn(),
             create: jest.fn(),
             findAll: jest.fn(),
             findOne: jest.fn(),
