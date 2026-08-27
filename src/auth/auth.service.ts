@@ -42,8 +42,9 @@ export class AuthService {
   ) {}
 
   async login(loginDto: LoginDto, res: Response) {
+    const email = loginDto.email.toLowerCase();
     const user = await this.usersRepository.findOne({
-      where: { email: loginDto.email },
+      where: { email },
       select: {
         id: true,
         email: true,
@@ -53,10 +54,11 @@ export class AuthService {
       },
     });
 
-    if (
-      !user ||
-      !verifyPassword(loginDto.password, this.appCfg.hashSalt, user.password)
-    ) {
+    const passwordValid = user
+      ? await this.isPasswordValid(loginDto.password, user.password)
+      : false;
+
+    if (!user || !passwordValid) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
@@ -242,6 +244,14 @@ export class AuthService {
       wantToLearn: user.wantToLearn,
       favoriteSkills: user.favoriteSkills,
     };
+  }
+
+  private async isPasswordValid(password: string, storedHash: string) {
+    if (storedHash.startsWith('$2')) {
+      return bcrypt.compare(password, storedHash);
+    }
+
+    return verifyPassword(password, this.appCfg.hashSalt, storedHash);
   }
 
   private parseExpiresInToMs(expiresIn: string): number {
