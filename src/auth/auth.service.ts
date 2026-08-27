@@ -77,9 +77,7 @@ export class AuthService {
     });
 
     const accessMaxAgeMs = this.parseExpiresInToMs(this.jwt.accessExpiresIn);
-    const refreshMaxAgeMs = this.parseExpiresInToMs(
-      this.jwt.refreshExpiresIn,
-    );
+    const refreshMaxAgeMs = this.parseExpiresInToMs(this.jwt.refreshExpiresIn);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
@@ -147,7 +145,7 @@ export class AuthService {
       dto.skill.subcategoryId,
     );
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, this.appCfg.saltRounds);
 
     try {
       const userId = await this.dataSource.transaction(async (manager) => {
@@ -183,7 +181,10 @@ export class AuthService {
       });
 
       const tokens = await this.issueTokens(userId, email, Roles.USER);
-      const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, 10);
+      const refreshTokenHash = await bcrypt.hash(
+        tokens.refreshToken,
+        this.appCfg.saltRounds,
+      );
       await this.usersService.updateRefreshToken(userId, refreshTokenHash);
 
       const user = await this.usersService.findPublicById(userId);
