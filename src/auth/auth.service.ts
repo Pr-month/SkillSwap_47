@@ -77,9 +77,7 @@ export class AuthService {
     });
 
     const accessMaxAgeMs = this.parseExpiresInToMs(this.jwt.accessExpiresIn);
-    const refreshMaxAgeMs = this.parseExpiresInToMs(
-      this.jwt.refreshExpiresIn,
-    );
+    const refreshMaxAgeMs = this.parseExpiresInToMs(this.jwt.refreshExpiresIn);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
