@@ -1,4 +1,4 @@
-import { IJwtConfig } from '../../jwt.config';
+import { IJwtConfig } from '../../config/jwt.config';
 import { JwtStrategy } from './jwt.strategy';
 
 describe('JwtStrategy', () => {
