@@ -20,7 +20,7 @@ import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
-import { JwtPayload } from './auth.types';
+import { JwtPayload, RefreshAuthUser } from './auth.types';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -101,6 +101,47 @@ export class AuthService {
         name: user.name,
         role: user.role,
       },
+    };
+  }
+
+  async refresh(authUser: RefreshAuthUser) {
+    const storedUser = await this.usersRepository.findOne({
+      where: { id: authUser.sub },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        refreshToken: true,
+      },
+    });
+
+    if (!storedUser?.refreshToken || !authUser.refreshToken) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    const matches = await this.isRefreshTokenValid(
+      authUser.refreshToken,
+      storedUser.refreshToken,
+    );
+
+    if (!matches) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    const tokens = await this.issueTokens(
+      storedUser.id,
+      storedUser.email,
+      storedUser.role,
+    );
+    await this.usersRepository.update(storedUser.id, {
+      refreshToken: storedUser.refreshToken.startsWith('$2')
+        ? await bcrypt.hash(tokens.refreshToken, 10)
+        : hashToken(tokens.refreshToken, this.appCfg.hashSalt),
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
   }
 
@@ -242,6 +283,14 @@ export class AuthService {
       wantToLearn: user.wantToLearn,
       favoriteSkills: user.favoriteSkills,
     };
+  }
+
+  private async isRefreshTokenValid(token: string, storedHash: string) {
+    if (storedHash.startsWith('$2')) {
+      return bcrypt.compare(token, storedHash);
+    }
+
+    return verifyPassword(token, this.appCfg.hashSalt, storedHash);
   }
 
   private parseExpiresInToMs(expiresIn: string): number {

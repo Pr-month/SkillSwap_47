@@ -5,3 +5,7 @@ export interface JwtPayload {
   email: string;
   role: Roles;
 }
+
+export type RefreshAuthUser = JwtPayload & {
+  refreshToken: string;
+};

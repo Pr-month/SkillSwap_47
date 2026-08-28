@@ -8,16 +8,21 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   Res,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { RefreshAuthUser } from './auth.types';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { RefreshTokenGuard } from './guards/refresh-token.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -39,6 +44,16 @@ export class AuthController {
   )
   login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
     return this.authService.login(loginDto, res);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RefreshTokenGuard)
+  refresh(
+    @Body() _refreshDto: RefreshDto,
+    @Req() req: { user: RefreshAuthUser },
+  ) {
+    return this.authService.refresh(req.user);
   }
 
   @Post()
