@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -17,8 +17,14 @@ export class UsersService {
     return 'This action adds a new user';
   }
 
-  findAll() {
-    return `This action returns all users`;
+  findAll(): Promise<User[]> {
+    return this.usersRepository.find({
+      relations: {
+        skills: { category: true },
+        wantToLearn: true,
+      },
+      order: { name: 'ASC' },
+    });
   }
 
   findOne(id: number) {
@@ -46,8 +52,35 @@ export class UsersService {
       relations: {
         skills: { category: true },
         wantToLearn: true,
+        favoriteSkills: true,
       },
     });
+  }
+
+  async findMe(id: string) {
+    const user = await this.findPublicById(id);
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return this.toPublicUser(user);
+  }
+
+  private toPublicUser(user: User) {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      about: user.about,
+      birthdate: user.birthdate,
+      city: user.city,
+      gender: user.gender,
+      avatar: user.avatar,
+      role: user.role,
+      skills: user.skills,
+      wantToLearn: user.wantToLearn,
+      favoriteSkills: user.favoriteSkills,
+    };
   }
 
   async updateRefreshToken(id: string, refreshToken: string): Promise<void> {
