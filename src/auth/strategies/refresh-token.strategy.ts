@@ -29,7 +29,9 @@ export class RefreshTokenStrategy extends PassportStrategy(
   validate(req: Request, payload: JwtPayload) {
     const bodyToken = (req.body as { refreshToken?: string } | undefined)
       ?.refreshToken;
-    const headerToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+    const headerToken = bodyToken
+      ? null
+      : ExtractJwt.fromAuthHeaderAsBearerToken()(req);
 
     return {
       ...payload,
