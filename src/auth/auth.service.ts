@@ -21,10 +21,8 @@ import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
 import { JwtPayload } from './auth.types';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -77,9 +75,7 @@ export class AuthService {
     });
 
     const accessMaxAgeMs = this.parseExpiresInToMs(this.jwt.accessExpiresIn);
-    const refreshMaxAgeMs = this.parseExpiresInToMs(
-      this.jwt.refreshExpiresIn,
-    );
+    const refreshMaxAgeMs = this.parseExpiresInToMs(this.jwt.refreshExpiresIn);
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
