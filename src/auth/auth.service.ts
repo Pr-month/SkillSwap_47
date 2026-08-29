@@ -10,17 +10,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import { appConfig, IConfig } from '../config/app.config';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
-import { IJwtConfig, jwtConfig } from '../jwt.config';
+import { IJwtConfig, jwtConfig } from '../config/jwt.config';
 import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { RefreshAuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,6 +34,8 @@ export class AuthService {
     private readonly dataSource: DataSource,
     @Inject(jwtConfig.KEY)
     private readonly jwt: IJwtConfig,
+    @Inject(appConfig.KEY)
+    private readonly appCfg: IConfig,
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -56,7 +58,10 @@ export class AuthService {
     }
 
     const tokens = await this.issueTokens(user.id, user.email, user.role);
-    const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, 10);
+    const refreshTokenHash = await bcrypt.hash(
+      tokens.refreshToken,
+      this.appCfg.saltRounds,
+    );
     await this.usersRepository.update(user.id, {
       refreshToken: refreshTokenHash,
     });
@@ -74,34 +79,53 @@ export class AuthService {
     };
   }
 
+  async refresh(authUser: RefreshAuthUser) {
+    const storedUser = await this.usersRepository.findOne({
+      where: { id: authUser.sub },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        refreshToken: true,
+      },
+    });
+
+    if (!storedUser?.refreshToken || !authUser.refreshToken) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    const matches = await bcrypt.compare(
+      authUser.refreshToken,
+      storedUser.refreshToken,
+    );
+
+    if (!matches) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    const tokens = await this.issueTokens(
+      storedUser.id,
+      storedUser.email,
+      storedUser.role,
+    );
+    await this.usersRepository.update(storedUser.id, {
+      refreshToken: await bcrypt.hash(
+        tokens.refreshToken,
+        this.appCfg.saltRounds,
+      ),
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
   async logout(userId: string) {
     await this.usersRepository.update(userId, { refreshToken: null });
 
     return { message: 'Успешный выход' };
   }
-
-  create(createAuthDto: CreateAuthDto) {
-    void createAuthDto;
-    return 'This action adds a new auth';
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    void updateAuthDto;
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
-
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase();
     const existingUser = await this.usersService.findByEmail(email);
@@ -123,7 +147,10 @@ export class AuthService {
       dto.skill.subcategoryId,
     );
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(
+      dto.password,
+      this.appCfg.saltRounds,
+    );
 
     try {
       const userId = await this.dataSource.transaction(async (manager) => {
@@ -159,7 +186,10 @@ export class AuthService {
       });
 
       const tokens = await this.issueTokens(userId, email, Roles.USER);
-      const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, 10);
+      const refreshTokenHash = await bcrypt.hash(
+        tokens.refreshToken,
+        this.appCfg.saltRounds,
+      );
       await this.usersService.updateRefreshToken(userId, refreshTokenHash);
 
       const user = await this.usersService.findPublicById(userId);
