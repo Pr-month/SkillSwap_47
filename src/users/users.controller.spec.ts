@@ -18,6 +18,7 @@ describe('UsersController', () => {
             create: jest.fn(),
             ...usersService,
             findOne: jest.fn(),
+            findMe: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
           },
