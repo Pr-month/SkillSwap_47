@@ -12,6 +12,7 @@ import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
@@ -41,7 +42,8 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
     JwtAuthGuard,
     RefreshTokenStrategy,
     RefreshTokenGuard,
+    RolesGuard
   ],
-  exports: [JwtModule, JwtAuthGuard, RefreshTokenGuard],
+  exports: [JwtModule, JwtAuthGuard, RefreshTokenGuard, RolesGuard],
 })
 export class AuthModule {}
