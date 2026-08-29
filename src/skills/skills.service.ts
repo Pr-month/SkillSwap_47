@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -44,14 +48,23 @@ export class SkillsService {
 
     // Проверяем, что навык принадлежит пользователю
     if (String(skill.owner.id) !== String(userId)) {
-      throw new ForbiddenException('Недостаточно прав. Вы можете удалять только свои навыки');
+      throw new ForbiddenException(
+        'Недостаточно прав. Вы можете удалять только свои навыки',
+      );
     }
 
     // Удаляем изображение с сервера
     if (skill.images && skill.images.length > 0) {
       skill.images.forEach((imagePath) => {
         const fileName = path.basename(imagePath);
-        const absolutePath = path.join(__dirname, '..', '..', 'public', 'uploads', fileName);
+        const absolutePath = path.join(
+          __dirname,
+          '..',
+          '..',
+          'public',
+          'uploads',
+          fileName,
+        );
 
         if (fs.existsSync(absolutePath)) {
           try {
@@ -67,4 +80,3 @@ export class SkillsService {
     await this.skillsRepository.remove(skill);
   }
 }
-
