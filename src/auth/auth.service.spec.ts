@@ -37,7 +37,7 @@ describe('AuthService', () => {
         {
           provide: appConfig.KEY,
           useValue: {
-            hashSalt: 'test_salt',
+            saltRounds: 10,
           },
         },
         {

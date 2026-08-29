@@ -14,11 +14,8 @@ describe('AuthController', () => {
           useValue: {
             register: jest.fn(),
             login: jest.fn(),
-            create: jest.fn(),
-            findAll: jest.fn(),
-            findOne: jest.fn(),
-            update: jest.fn(),
-            remove: jest.fn(),
+            refresh: jest.fn(),
+            logout: jest.fn(),
           },
         },
       ],
