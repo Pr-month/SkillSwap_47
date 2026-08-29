@@ -15,6 +15,7 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { SkillsService } from './skills.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Request } from 'express';
 
 interface RequestWithUser extends Request {
@@ -28,8 +29,12 @@ export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
 
   @Post()
-  create(@Body() createSkillDto: CreateSkillDto) {
-    return this.skillsService.create(createSkillDto);
+  @UseGuards(JwtAuthGuard)
+  create(
+    @Body() createSkillDto: CreateSkillDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.skillsService.create(createSkillDto, userId);
   }
 
   @Get()

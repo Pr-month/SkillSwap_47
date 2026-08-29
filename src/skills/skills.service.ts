@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CategoriesService } from '../categories/categories.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from './entities/skill.entity';
@@ -16,11 +17,24 @@ export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
-  create(createSkillDto: CreateSkillDto) {
-    void createSkillDto;
-    return 'This action adds a new skill';
+  async create(createSkillDto: CreateSkillDto, userId: string): Promise<Skill> {
+    const category = await this.categoriesService.assertSubcategory(
+      createSkillDto.categoryId,
+      createSkillDto.subcategoryId,
+    );
+
+    const skill = this.skillsRepository.create({
+      title: createSkillDto.title,
+      description: createSkillDto.description,
+      images: createSkillDto.images ?? [],
+      category,
+      owner: { id: userId } as Skill['owner'],
+    });
+
+    return this.skillsRepository.save(skill);
   }
 
   findAll() {
