@@ -8,23 +8,18 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Response } from 'express';
 import type { StringValue } from 'ms';
+import { appConfig, IConfig } from 'src/app.config';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
-import { appConfig, IConfig } from '../app.config';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
-import { hashToken, verifyPassword } from '../common/utils/password.util';
 import { IJwtConfig, jwtConfig } from '../jwt.config';
 import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
-import { JwtPayload } from './auth.types';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -36,15 +31,15 @@ export class AuthService {
     private readonly categoriesService: CategoriesService,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
-    @Inject(appConfig.KEY) private readonly appCfg: IConfig,
     @Inject(jwtConfig.KEY)
     private readonly jwt: IJwtConfig,
-  ) {}
+    @Inject(appConfig.KEY)
+    private readonly appCfg: IConfig
+  ) { }
 
-  async login(loginDto: LoginDto, res: Response) {
-    const email = loginDto.email.toLowerCase();
+  async login(loginDto: LoginDto) {
     const user = await this.usersRepository.findOne({
-      where: { email },
+      where: { email: loginDto.email.toLowerCase() },
       select: {
         id: true,
         email: true,
@@ -54,45 +49,17 @@ export class AuthService {
       },
     });
 
-    const passwordValid = user
-      ? await this.isPasswordValid(loginDto.password, user.password)
-      : false;
+    const passwordValid =
+      !!user && (await bcrypt.compare(loginDto.password, user.password));
 
     if (!user || !passwordValid) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const accessToken = await this.jwtService.signAsync(payload);
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: this.jwt.refreshSecret,
-      expiresIn: this.jwt.refreshExpiresIn as StringValue,
-    });
-
+    const tokens = await this.issueTokens(user.id, user.email, user.role);
+    const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, this.appCfg.saltRounds);
     await this.usersRepository.update(user.id, {
-      refreshToken: hashToken(refreshToken, this.appCfg.hashSalt),
-    });
-
-    const accessMaxAgeMs = this.parseExpiresInToMs(this.jwt.accessExpiresIn);
-    const refreshMaxAgeMs = this.parseExpiresInToMs(
-      this.jwt.refreshExpiresIn,
-    );
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: accessMaxAgeMs,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: refreshMaxAgeMs,
+      refreshToken: refreshTokenHash,
     });
 
     return {
@@ -103,29 +70,9 @@ export class AuthService {
         name: user.name,
         role: user.role,
       },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
-  }
-
-  create(createAuthDto: CreateAuthDto) {
-    void createAuthDto;
-    return 'This action adds a new auth';
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    void updateAuthDto;
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
   }
 
   async register(dto: RegisterDto) {
@@ -149,7 +96,7 @@ export class AuthService {
       dto.skill.subcategoryId,
     );
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, this.appCfg.saltRounds);
 
     try {
       const userId = await this.dataSource.transaction(async (manager) => {
@@ -185,7 +132,10 @@ export class AuthService {
       });
 
       const tokens = await this.issueTokens(userId, email, Roles.USER);
-      const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, 10);
+      const refreshTokenHash = await bcrypt.hash(
+        tokens.refreshToken,
+        this.appCfg.saltRounds,
+      );
       await this.usersService.updateRefreshToken(userId, refreshTokenHash);
 
       const user = await this.usersService.findPublicById(userId);
@@ -244,33 +194,5 @@ export class AuthService {
       wantToLearn: user.wantToLearn,
       favoriteSkills: user.favoriteSkills,
     };
-  }
-
-  private async isPasswordValid(password: string, storedHash: string) {
-    if (storedHash.startsWith('$2')) {
-      return bcrypt.compare(password, storedHash);
-    }
-
-    return verifyPassword(password, this.appCfg.hashSalt, storedHash);
-  }
-
-  private parseExpiresInToMs(expiresIn: string): number {
-    const match = /^(\d+)([smhd])$/i.exec(expiresIn);
-
-    if (!match) {
-      return 60 * 60 * 1000;
-    }
-
-    const value = Number(match[1]);
-    const unit = match[2].toLowerCase();
-
-    const multipliers: Record<string, number> = {
-      s: 1000,
-      m: 60 * 1000,
-      h: 60 * 60 * 1000,
-      d: 24 * 60 * 60 * 1000,
-    };
-
-    return value * multipliers[unit];
   }
 }

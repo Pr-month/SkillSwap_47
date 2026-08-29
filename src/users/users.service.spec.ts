@@ -7,15 +7,19 @@ import { UsersService } from './users.service';
 describe('UsersService', () => {
   let service: UsersService;
   let findOne: jest.Mock;
+  let usersRepository: { find: jest.Mock };
 
   beforeEach(async () => {
     findOne = jest.fn();
+    usersRepository = { find: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
         {
           provide: getRepositoryToken(User),
           useValue: {
+            ...usersRepository,
             findOne,
             save: jest.fn(),
             update: jest.fn(),
@@ -65,5 +69,19 @@ describe('UsersService', () => {
     await expect(service.findMe('missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('should return users with their public relations', async () => {
+    const users = [{ id: 'user-id', name: 'Анна' } as User];
+    usersRepository.find.mockResolvedValue(users);
+
+    await expect(service.findAll()).resolves.toEqual(users);
+    expect(usersRepository.find).toHaveBeenCalledWith({
+      relations: {
+        skills: { category: true },
+        wantToLearn: true,
+      },
+      order: { name: 'ASC' },
+    });
   });
 });
