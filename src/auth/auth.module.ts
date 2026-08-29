@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import type { StringValue } from 'ms';
 import { CategoriesModule } from '../categories/categories.module';
 import { CitiesModule } from '../cities/cities.module';
-import { IJwtConfig, jwtConfig } from '../jwt.config';
+import { IJwtConfig, jwtConfig } from '../config/jwt.config';
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';

@@ -1,4 +1,4 @@
-import { IJwtConfig } from '../../jwt.config';
+import { IJwtConfig } from '../../config/jwt.config';
 import { Roles } from '../../users/users.enums';
 import { JwtPayload } from '../auth.types';
 import { JwtStrategy } from './jwt.strategy';
