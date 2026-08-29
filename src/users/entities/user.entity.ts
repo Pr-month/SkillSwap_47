@@ -10,7 +10,7 @@ import {
 import { Category } from '../../categories/entities/category.entity';
 import { UserGender } from '../../common/enums/user-gender.enum';
 import { Skill } from '../../skills/entities/skill.entity';
-import { Roles } from '../users.enums';
+import { Roles } from '../../common/enums/user-role.enum';
 
 @Entity('users')
 export class User {

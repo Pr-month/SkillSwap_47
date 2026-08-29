@@ -1,4 +1,6 @@
-import { IJwtConfig } from '../../jwt.config';
+import { IJwtConfig } from '../../config/jwt.config';
+import { Roles } from '../../users/users.enums';
+import { JwtPayload } from '../auth.types';
 import { JwtStrategy } from './jwt.strategy';
 
 describe('JwtStrategy', () => {
@@ -15,7 +17,11 @@ describe('JwtStrategy', () => {
 
   it('should return the JWT payload as an authenticated user', () => {
     const strategy = new JwtStrategy(config);
-    const payload = { sub: 'user-id' };
+    const payload: JwtPayload = {
+      sub: 'user-id',
+      email: 'user@example.com',
+      role: Roles.USER,
+    };
 
     expect(strategy.validate(payload)).toEqual(payload);
   });
