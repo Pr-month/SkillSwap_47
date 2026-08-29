@@ -1,7 +1,6 @@
 import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { appConfig, IConfig } from './app.config';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 import { appConfig, IConfig } from './config/app.config';
 
