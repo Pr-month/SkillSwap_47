@@ -21,6 +21,7 @@ import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateAuthDto } from './dto/update-auth.dto';
+import { appConfig, IConfig } from 'src/app.config';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +35,9 @@ export class AuthService {
     private readonly dataSource: DataSource,
     @Inject(jwtConfig.KEY)
     private readonly jwt: IJwtConfig,
-  ) {}
+    @Inject(appConfig.KEY)
+    private readonly appCfg: IConfig
+  ) { }
 
   async login(loginDto: LoginDto) {
     const user = await this.usersRepository.findOne({
@@ -56,24 +59,9 @@ export class AuthService {
     }
 
     const tokens = await this.issueTokens(user.id, user.email, user.role);
-    const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, this.appCfg.hashSalt);
+    const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, this.appCfg.saltRounds);
     await this.usersRepository.update(user.id, {
-      refreshToken: hashToken(refreshToken, this.appCfg.hashSalt),
-    });
-
-    const accessMaxAgeMs = this.parseExpiresInToMs(this.jwt.accessExpiresIn);
-    const refreshMaxAgeMs = this.parseExpiresInToMs(this.jwt.refreshExpiresIn);
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: accessMaxAgeMs,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: refreshMaxAgeMs,
+      refreshToken: refreshTokenHash,
     });
 
     return {
