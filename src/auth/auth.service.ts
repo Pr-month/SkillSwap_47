@@ -17,6 +17,9 @@ import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
+import { JwtPayload } from './auth.types';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -75,34 +78,6 @@ export class AuthService {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
-  }
-
-  async logout(userId: string) {
-    await this.usersRepository.update(userId, { refreshToken: null });
-
-    return { message: 'Успешный выход' };
-  }
-
-  create(createAuthDto: CreateAuthDto) {
-    void createAuthDto;
-    return 'This action adds a new auth';
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    void updateAuthDto;
-    return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
   }
 
   async register(dto: RegisterDto) {
