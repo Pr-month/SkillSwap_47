@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
+import { appConfig, IConfig } from 'src/app.config';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
@@ -17,14 +18,8 @@ import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
-import { JwtPayload } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
-import { appConfig, IConfig } from 'src/app.config';
 
 @Injectable()
 export class AuthService {
