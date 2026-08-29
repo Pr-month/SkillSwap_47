@@ -16,7 +16,7 @@ import { CitiesService } from '../cities/cities.service';
 import { IJwtConfig, jwtConfig } from '../config/jwt.config';
 import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
-import { Roles } from '../users/users.enums';
+import { Roles } from '../common/enums/user-role.enum';
 import { UsersService } from '../users/users.service';
 import { RefreshAuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
