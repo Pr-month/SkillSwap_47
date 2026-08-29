@@ -9,8 +9,8 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
-import { appConfig, IConfig } from 'src/app.config';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import { appConfig, IConfig } from '../app.config';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
 import { IJwtConfig, jwtConfig } from '../jwt.config';
@@ -18,6 +18,7 @@ import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
 import { Roles } from '../users/users.enums';
 import { UsersService } from '../users/users.service';
+import { RefreshAuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -34,8 +35,8 @@ export class AuthService {
     @Inject(jwtConfig.KEY)
     private readonly jwt: IJwtConfig,
     @Inject(appConfig.KEY)
-    private readonly appCfg: IConfig
-  ) { }
+    private readonly appCfg: IConfig,
+  ) {}
 
   async login(loginDto: LoginDto) {
     const user = await this.usersRepository.findOne({
@@ -57,7 +58,10 @@ export class AuthService {
     }
 
     const tokens = await this.issueTokens(user.id, user.email, user.role);
-    const refreshTokenHash = await bcrypt.hash(tokens.refreshToken, this.appCfg.saltRounds);
+    const refreshTokenHash = await bcrypt.hash(
+      tokens.refreshToken,
+      this.appCfg.saltRounds,
+    );
     await this.usersRepository.update(user.id, {
       refreshToken: refreshTokenHash,
     });
@@ -75,6 +79,53 @@ export class AuthService {
     };
   }
 
+  async refresh(authUser: RefreshAuthUser) {
+    const storedUser = await this.usersRepository.findOne({
+      where: { id: authUser.sub },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        refreshToken: true,
+      },
+    });
+
+    if (!storedUser?.refreshToken || !authUser.refreshToken) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    const matches = await bcrypt.compare(
+      authUser.refreshToken,
+      storedUser.refreshToken,
+    );
+
+    if (!matches) {
+      throw new UnauthorizedException('Невалидный refresh токен');
+    }
+
+    const tokens = await this.issueTokens(
+      storedUser.id,
+      storedUser.email,
+      storedUser.role,
+    );
+    await this.usersRepository.update(storedUser.id, {
+      refreshToken: await bcrypt.hash(
+        tokens.refreshToken,
+        this.appCfg.saltRounds,
+      ),
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
+  }
+
+  async logout(userId: string) {
+    await this.usersRepository.update(userId, { refreshToken: null });
+
+    return { message: 'Успешный выход' };
+  }
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase();
     const existingUser = await this.usersService.findByEmail(email);
@@ -96,7 +147,10 @@ export class AuthService {
       dto.skill.subcategoryId,
     );
 
-    const passwordHash = await bcrypt.hash(dto.password, this.appCfg.saltRounds);
+    const passwordHash = await bcrypt.hash(
+      dto.password,
+      this.appCfg.saltRounds,
+    );
 
     try {
       const userId = await this.dataSource.transaction(async (manager) => {

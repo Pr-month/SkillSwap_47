@@ -7,6 +7,10 @@ export interface JwtPayload {
   role: Roles;
 }
 
+export type RefreshAuthUser = JwtPayload & {
+  refreshToken: string;
+};
+
 export interface AuthRequest extends Request {
   user: JwtPayload;
 }
