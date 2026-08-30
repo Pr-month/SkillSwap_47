@@ -6,12 +6,14 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
   Req,
 } from '@nestjs/common';
 import { CreateSkillDto } from './dto/create-skill.dto';
+import { FindSkillsQueryDto } from './dto/find-skills-query.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { SkillsService } from './skills.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -38,8 +40,8 @@ export class SkillsController {
   }
 
   @Get()
-  findAll() {
-    return this.skillsService.findAll();
+  findAll(@Query() query: FindSkillsQueryDto) {
+    return this.skillsService.findAll(query);
   }
 
   @Get(':id')

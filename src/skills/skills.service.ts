@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
+import { FindSkillsQueryDto } from './dto/find-skills-query.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from './entities/skill.entity';
 import * as fs from 'fs';
@@ -37,8 +38,21 @@ export class SkillsService {
     return this.skillsRepository.save(skill);
   }
 
-  findAll() {
-    return `This action returns all skills`;
+  async findAll(query: FindSkillsQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.skillsRepository.findAndCount({
+      relations: { category: true, owner: true },
+      order: { id: 'DESC' },
+      skip,
+      take: limit,
+    });
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+
+    return { data, page, totalPages };
   }
 
   findOne(id: string) {
