@@ -12,6 +12,7 @@ import { jwtConfig } from './config/jwt.config';
 import { GendersModule } from './genders/genders.module';
 import { SkillsModule } from './skills/skills.module';
 import { UsersModule } from './users/users.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
     CategoriesModule,
     GendersModule,
     SkillsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

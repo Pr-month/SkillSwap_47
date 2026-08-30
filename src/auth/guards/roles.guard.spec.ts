@@ -1,6 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Roles } from '../../users/users.enums';
+import { Roles } from '../../common/enums/user-role.enum';
 import { JwtPayload } from '../auth.types';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { RolesGuard } from './roles.guard';
