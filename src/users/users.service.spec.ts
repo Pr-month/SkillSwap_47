@@ -1,17 +1,21 @@
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
+import { appConfig } from '../config/app.config';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
   let service: UsersService;
   let findOne: jest.Mock;
-  let usersRepository: { find: jest.Mock };
+  let update: jest.Mock;
+  let usersRepository: { find: jest.Mock; update: jest.Mock };
 
   beforeEach(async () => {
     findOne = jest.fn();
-    usersRepository = { find: jest.fn() };
+    update = jest.fn();
+    usersRepository = { find: jest.fn(), update };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -22,8 +26,12 @@ describe('UsersService', () => {
             ...usersRepository,
             findOne,
             save: jest.fn(),
-            update: jest.fn(),
+            update,
           },
+        },
+        {
+          provide: appConfig.KEY,
+          useValue: { saltRounds: 10 },
         },
       ],
     }).compile();
@@ -83,5 +91,39 @@ describe('UsersService', () => {
       },
       order: { name: 'ASC' },
     });
+  });
+
+  it('updatePassword changes the password after verifying the current one', async () => {
+    const passwordHash = await bcrypt.hash('old-password', 10);
+    findOne.mockResolvedValue({ id: 'user-1', password: passwordHash });
+
+    await expect(
+      service.updatePassword('user-1', {
+        oldPassword: 'old-password',
+        newPassword: 'new-password',
+      }),
+    ).resolves.toMatchObject({ message: 'Пароль успешно обновлён' });
+
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(update).toHaveBeenCalledWith(
+      { id: 'user-1' },
+      expect.objectContaining({
+        password: expect.any(String),
+      }),
+    );
+  });
+
+  it('updatePassword throws when the current password is incorrect', async () => {
+    findOne.mockResolvedValue({
+      id: 'user-1',
+      password: await bcrypt.hash('old-password', 10),
+    });
+
+    await expect(
+      service.updatePassword('user-1', {
+        oldPassword: 'wrong-password',
+        newPassword: 'new-password',
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });
