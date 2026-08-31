@@ -13,6 +13,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
@@ -36,6 +37,15 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   findMe(@CurrentUser('sub') userId: string) {
     return this.usersService.findMe(userId);
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  updateMe(
+    @CurrentUser('sub') userId: string,
+    @Body() updateMeDto: UpdateMeDto,
+  ) {
+    return this.usersService.updateMe(userId, updateMeDto);
   }
 
   @Patch('me/password')

@@ -150,6 +150,35 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "patch_users_me",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Иван\",\n  \"email\": \"ivan@mail.com\",\n  \"about\": \"Учу силовым, учусь готовить\",\n  \"birthdate\": \"1998-04-12\",\n  \"gender\": \"male\",\n  \"city\": \"Казань\",\n  \"avatar\": \"\",\n  \"wantToLearn\": {\n    \"categoryId\": \"f20a685b-a5f6-44e0-956c-5d48a4a2cbf5\",\n    \"subcategoryId\": \"1cdbe8e4-343e-4af5-96cf-6c3682fadcfb\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/users/me",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "users",
+            "me"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
