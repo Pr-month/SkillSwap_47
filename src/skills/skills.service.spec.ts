@@ -12,7 +12,7 @@ describe('SkillsService', () => {
   let assertSubcategory: jest.Mock;
 
   beforeEach(async () => {
-    create = jest.fn((payload) => payload);
+    create = jest.fn((payload: Partial<Skill>) => payload as Skill);
     save = jest.fn();
     assertSubcategory = jest.fn();
 

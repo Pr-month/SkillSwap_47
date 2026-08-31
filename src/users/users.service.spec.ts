@@ -105,12 +105,10 @@ describe('UsersService', () => {
     ).resolves.toMatchObject({ message: 'Пароль успешно обновлён' });
 
     expect(update).toHaveBeenCalledTimes(1);
-    expect(update).toHaveBeenCalledWith(
-      { id: 'user-1' },
-      expect.objectContaining({
-        password: expect.any(String),
-      }),
-    );
+    const updatePayload: { password: string } = {
+      password: expect.any(String) as string,
+    };
+    expect(update).toHaveBeenCalledWith({ id: 'user-1' }, updatePayload);
   });
 
   it('updatePassword throws when the current password is incorrect', async () => {
