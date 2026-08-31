@@ -1,14 +1,19 @@
 import {
+  BadRequestException,
+  ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
+import { CategoriesService } from '../categories/categories.service';
+import { CitiesService } from '../cities/cities.service';
 import { appConfig, IConfig } from '../config/app.config';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -20,6 +25,8 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
     @Inject(appConfig.KEY)
     private readonly appCfg: IConfig,
+    private readonly citiesService: CitiesService,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   create(createUserDto: CreateUserDto) {
@@ -96,6 +103,70 @@ export class UsersService {
     }
 
     return this.toPublicUser(user);
+  }
+
+  async updateMe(userId: string, dto: UpdateMeDto) {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: { wantToLearn: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (dto.name !== undefined) {
+      user.name = dto.name;
+    }
+
+    if (dto.about !== undefined) {
+      user.about = dto.about;
+    }
+
+    if (dto.birthdate !== undefined) {
+      user.birthdate = dto.birthdate;
+    }
+
+    if (dto.gender !== undefined) {
+      user.gender = dto.gender;
+    }
+
+    if (dto.avatar !== undefined) {
+      user.avatar = dto.avatar;
+    }
+
+    if (dto.email !== undefined) {
+      const email = dto.email.toLowerCase();
+      if (email !== user.email) {
+        const existingUser = await this.findByEmail(email);
+        if (existingUser) {
+          throw new ConflictException(
+            'Пользователь с таким email уже существует',
+          );
+        }
+      }
+      user.email = email;
+    }
+
+    if (dto.city !== undefined) {
+      const city = await this.citiesService.findByName(dto.city);
+      if (!city) {
+        throw new BadRequestException('Неизвестный город');
+      }
+      user.city = city.name;
+    }
+
+    if (dto.wantToLearn) {
+      user.wantToLearn = [
+        await this.categoriesService.assertSubcategory(
+          dto.wantToLearn.categoryId,
+          dto.wantToLearn.subcategoryId,
+        ),
+      ];
+    }
+
+    await this.usersRepository.save(user);
+    return this.findMe(userId);
   }
 
   private toPublicUser(user: User) {

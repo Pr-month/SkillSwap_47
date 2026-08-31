@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { CATEGORIES_SEED } from './categories.data';
@@ -6,25 +11,33 @@ import { Category } from './entities/category.entity';
 
 @Injectable()
 export class CategoriesService implements OnModuleInit {
+  private readonly logger = new Logger(CategoriesService.name);
+
   constructor(
     @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const count = await this.categoriesRepository.count();
-    if (count > 0) {
-      return;
-    }
+    try {
+      const count = await this.categoriesRepository.count();
+      if (count > 0) {
+        return;
+      }
 
-    for (const item of CATEGORIES_SEED) {
-      const parent = await this.categoriesRepository.save(
-        this.categoriesRepository.create({ name: item.name }),
-      );
-      await this.categoriesRepository.save(
-        item.children.map((name) =>
-          this.categoriesRepository.create({ name, parent }),
-        ),
+      for (const item of CATEGORIES_SEED) {
+        const parent = await this.categoriesRepository.save(
+          this.categoriesRepository.create({ name: item.name }),
+        );
+        await this.categoriesRepository.save(
+          item.children.map((name) =>
+            this.categoriesRepository.create({ name, parent }),
+          ),
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Сид категорий пропущен: ${error instanceof Error ? error.message : error}`,
       );
     }
   }
