@@ -7,7 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CitiesModule } from './cities/cities.module';
 import { appConfig } from './config/app.config';
-import { databaseConfig } from './config/db.config';
+import { databaseConfig, type IDatabaseConfig } from './config/db.config';
 import { jwtConfig } from './config/jwt.config';
 import { GendersModule } from './genders/genders.module';
 import { SkillsModule } from './skills/skills.module';
@@ -20,9 +20,13 @@ import { UploadModule } from './upload/upload.module';
       isGlobal: true,
       load: [databaseConfig, appConfig, jwtConfig],
     }),
-    TypeOrmModule.forRoot({
-      ...databaseConfig(),
-      autoLoadEntities: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: IDatabaseConfig) => ({
+        ...config,
+        autoLoadEntities: true,
+      }),
+      inject: [databaseConfig.KEY],
     }),
     UsersModule,
     AuthModule,

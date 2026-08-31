@@ -163,7 +163,7 @@ describe('UsersService', () => {
     };
     findOne.mockResolvedValue(current);
     findByName.mockResolvedValue({ name: 'Казань' });
-    save.mockImplementation(async (user: User) => user);
+    save.mockImplementation((user: User) => user);
 
     const result = await service.updateMe('user-1', {
       name: 'Иван',
