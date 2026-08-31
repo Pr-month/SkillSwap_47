@@ -52,6 +52,10 @@ export class SkillsService {
 
     const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
 
+    if (page > Math.max(totalPages, 1)) {
+      throw new NotFoundException(`Страница ${page} не найдена`);
+    }
+
     return { data, page, totalPages };
   }
 
