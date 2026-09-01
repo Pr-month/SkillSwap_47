@@ -62,4 +62,16 @@ export class CategoriesService implements OnModuleInit {
 
     return subcategory;
   }
+
+  async findById(id: string): Promise<Category> {
+    const category = await this.categoriesRepository.findOne({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new BadRequestException(`Не найдено категории ${id}`);
+    }
+
+    return category;
+  }
 }

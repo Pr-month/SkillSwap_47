@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from './entities/skill.entity';
+import { CategoriesService } from '../categories/categories.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -16,6 +17,7 @@ export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
+    private readonly categoriesService: CategoriesService,
   ) {}
 
   create(createSkillDto: CreateSkillDto) {
@@ -31,9 +33,35 @@ export class SkillsService {
     return `This action returns a #${id} skill`;
   }
 
-  update(id: string, updateSkillDto: UpdateSkillDto) {
-    void updateSkillDto;
-    return `This action updates a #${id} skill`;
+  async update(
+    id: string,
+    updateSkillDto: UpdateSkillDto,
+    userId: string,
+  ): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: { owner: true, category: true },
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID ${id} не найден`);
+    }
+
+    if (String(skill.owner.id) !== String(userId)) {
+      throw new ForbiddenException(
+        'Недостаточно прав. Вы можете изменять только свои навыки',
+      );
+    }
+
+    const { categoryId, ...rest } = updateSkillDto;
+
+    Object.assign(skill, rest);
+
+    if (categoryId !== undefined) {
+      skill.category = await this.categoriesService.findById(categoryId);
+    }
+
+    return this.skillsRepository.save(skill);
   }
 
   async remove(id: string, userId: string): Promise<void> {
