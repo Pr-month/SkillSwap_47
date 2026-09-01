@@ -1,4 +1,4 @@
-import { registerAs } from '@nestjs/config';
+import { ConfigType, registerAs } from '@nestjs/config';
 import { DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 
@@ -21,3 +21,5 @@ export const databaseConfig = registerAs(
     },
   }),
 );
+
+export type IDatabaseConfig = ConfigType<typeof databaseConfig>;
