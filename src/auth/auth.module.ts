@@ -6,13 +6,16 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import type { StringValue } from 'ms';
 import { CategoriesModule } from '../categories/categories.module';
 import { CitiesModule } from '../cities/cities.module';
-import { IJwtConfig, jwtConfig } from '../jwt.config';
+import { IJwtConfig, jwtConfig } from '../config/jwt.config';
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
 
 @Module({
   imports: [
@@ -33,7 +36,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     CategoriesModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard],
-  exports: [JwtModule, JwtAuthGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    RefreshTokenStrategy,
+    RefreshTokenGuard,
+    RolesGuard
+  ],
+  exports: [JwtModule, JwtAuthGuard, RefreshTokenGuard, RolesGuard],
 })
 export class AuthModule {}

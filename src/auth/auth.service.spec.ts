@@ -2,10 +2,10 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { appConfig } from '../app.config';
+import { appConfig } from '../config/app.config';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
-import { jwtConfig } from '../jwt.config';
+import { jwtConfig } from '../config/jwt.config';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
@@ -37,7 +37,7 @@ describe('AuthService', () => {
         {
           provide: appConfig.KEY,
           useValue: {
-            hashSalt: 'test_salt',
+            saltRounds: 10,
           },
         },
         {

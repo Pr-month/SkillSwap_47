@@ -2,16 +2,17 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
-import { appConfig } from './app.config';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CitiesModule } from './cities/cities.module';
-import { databaseConfig } from './db.config';
+import { appConfig } from './config/app.config';
+import { databaseConfig, type IDatabaseConfig } from './config/db.config';
+import { jwtConfig } from './config/jwt.config';
 import { GendersModule } from './genders/genders.module';
-import { jwtConfig } from './jwt.config';
 import { SkillsModule } from './skills/skills.module';
 import { UsersModule } from './users/users.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -19,9 +20,13 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
       load: [databaseConfig, appConfig, jwtConfig],
     }),
-    TypeOrmModule.forRoot({
-      ...databaseConfig(),
-      autoLoadEntities: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: IDatabaseConfig) => ({
+        ...config,
+        autoLoadEntities: true,
+      }),
+      inject: [databaseConfig.KEY],
     }),
     UsersModule,
     AuthModule,
@@ -29,6 +34,7 @@ import { UsersModule } from './users/users.module';
     CategoriesModule,
     GendersModule,
     SkillsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

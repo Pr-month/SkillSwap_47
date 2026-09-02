@@ -1,4 +1,4 @@
-import { registerAs } from '@nestjs/config';
+import { ConfigType, registerAs } from '@nestjs/config';
 import { DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 
@@ -13,7 +13,7 @@ export const databaseConfig = registerAs(
     username: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     synchronize: false,
     logging: false,
     ssl: {
@@ -21,3 +21,5 @@ export const databaseConfig = registerAs(
     },
   }),
 );
+
+export type IDatabaseConfig = ConfigType<typeof databaseConfig>;
