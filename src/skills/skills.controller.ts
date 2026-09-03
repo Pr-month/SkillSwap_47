@@ -18,13 +18,7 @@ import { UpdateSkillDto } from './dto/update-skill.dto';
 import { SkillsService } from './skills.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Request } from 'express';
-
-interface RequestWithUser extends Request {
-  user: {
-    id: string;
-  };
-}
+import { AuthRequest } from '../auth/auth.types';
 
 @Controller('skills')
 export class SkillsController {
@@ -57,8 +51,8 @@ export class SkillsController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const userId = req.user.id;
+  remove(@Param('id') id: string, @Req() req: AuthRequest) {
+    const userId = req.user.sub;
     return this.skillsService.remove(id, userId);
   }
 }
