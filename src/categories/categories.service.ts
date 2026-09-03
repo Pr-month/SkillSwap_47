@@ -2,11 +2,13 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { CATEGORIES_SEED } from './categories.data';
+import { CreateCategoryDto } from './dto/create-category.dto';
 import { Category } from './entities/category.entity';
 
 @Injectable()
@@ -56,6 +58,43 @@ export class CategoriesService implements OnModuleInit {
         .map((child) => ({ id: child.id, name: child.name }))
         .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
     }));
+  }
+
+  async create(dto: CreateCategoryDto): Promise<{
+    id: string;
+    name: string;
+    parentId: string | null;
+  }> {
+    let parent: Category | null = null;
+
+    if (dto.parentId) {
+      const foundParent = await this.categoriesRepository.findOne({
+        where: { id: dto.parentId },
+        relations: { parent: true },
+      });
+
+      if (!foundParent) {
+        throw new NotFoundException('Родительская категория не найдена');
+      }
+
+      if (foundParent.parent) {
+        throw new BadRequestException(
+          'Подкатегорию можно создать только у корневой категории',
+        );
+      }
+
+      parent = foundParent;
+    }
+
+    const category = await this.categoriesRepository.save(
+      this.categoriesRepository.create({ name: dto.name, parent }),
+    );
+
+    return {
+      id: category.id,
+      name: category.name,
+      parentId: parent?.id ?? null,
+    };
   }
 
   async assertSubcategory(
