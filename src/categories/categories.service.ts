@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { CATEGORIES_SEED } from './categories.data';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 
 @Injectable()
@@ -94,6 +95,67 @@ export class CategoriesService implements OnModuleInit {
       id: category.id,
       name: category.name,
       parentId: parent?.id ?? null,
+    };
+  }
+
+  async update(
+    id: string,
+    dto: UpdateCategoryDto,
+  ): Promise<{
+    id: string;
+    name: string;
+    parentId: string | null;
+  }> {
+    const category = await this.categoriesRepository.findOne({
+      where: { id },
+      relations: { parent: true, children: true },
+    });
+
+    if (!category) {
+      throw new NotFoundException('Категория не найдена');
+    }
+
+    if (dto.name !== undefined) {
+      category.name = dto.name;
+    }
+
+    if (dto.parentId !== undefined) {
+      if (dto.parentId === id) {
+        throw new BadRequestException(
+          'Категория не может быть родителем самой себя',
+        );
+      }
+
+      if (!category.parent && (category.children?.length ?? 0) > 0) {
+        throw new BadRequestException(
+          'Корневую категорию с подкатегориями нельзя сделать подкатегорией',
+        );
+      }
+
+      const foundParent = await this.categoriesRepository.findOne({
+        where: { id: dto.parentId },
+        relations: { parent: true },
+      });
+
+      if (!foundParent) {
+        throw new NotFoundException('Родительская категория не найдена');
+      }
+
+      if (foundParent.parent) {
+        throw new BadRequestException(
+          'Подкатегорию можно создать только у корневой категории',
+        );
+      }
+
+      category.parent = foundParent;
+    }
+
+    const saved = await this.categoriesRepository.save(category);
+
+    return {
+      id: saved.id,
+      name: saved.name,
+      parentId: saved.parent?.id ?? null,
     };
   }
 
