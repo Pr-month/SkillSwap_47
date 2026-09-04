@@ -67,11 +67,6 @@ export class UsersService {
     return `This action returns a #${id} user`;
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    void updateUserDto;
-    return `This action updates a #${id} user`;
-  }
-
   async updatePassword(userId: string, dto: UpdatePasswordDto) {
     const user = await this.usersRepository.findOne({
       where: { id: userId },
