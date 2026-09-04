@@ -15,7 +15,6 @@ import { appConfig, IConfig } from '../config/app.config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { User } from './entities/user.entity';
 

@@ -16,7 +16,7 @@ describe('RequestsService', () => {
   beforeEach(async () => {
     findById = jest.fn();
     findOne = jest.fn();
-    create = jest.fn((payload) => payload);
+    create = jest.fn((payload: Partial<SkillRequest>) => payload as SkillRequest);
     save = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
