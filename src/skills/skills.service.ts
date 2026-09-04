@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   Injectable,
   NotFoundException,
   ForbiddenException,
@@ -10,6 +11,7 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { FindSkillsQueryDto } from './dto/find-skills-query.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from './entities/skill.entity';
+import { User } from '../users/entities/user.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -18,6 +20,8 @@ export class SkillsService {
   constructor(
     @InjectRepository(Skill)
     private readonly skillsRepository: Repository<Skill>,
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
     private readonly categoriesService: CategoriesService,
   ) {}
 
@@ -61,6 +65,34 @@ export class SkillsService {
 
   findOne(id: string) {
     return `This action returns a #${id} skill`;
+  }
+
+  async addToFavorites(skillId: string, userId: string): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id: skillId },
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID ${skillId} не найден`);
+    }
+
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: { favoriteSkills: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (user.favoriteSkills.some(({ id }) => id === skillId)) {
+      throw new ConflictException('Навык уже находится в избранном');
+    }
+
+    user.favoriteSkills.push(skill);
+    await this.usersRepository.save(user);
+
+    return skill;
   }
 
   update(id: string, updateSkillDto: UpdateSkillDto) {
