@@ -10,6 +10,7 @@ describe('SkillsService', () => {
   let service: SkillsService;
   let create: jest.Mock;
   let save: jest.Mock;
+  let findSkill: jest.Mock;
   let findUser: jest.Mock;
   let saveUser: jest.Mock;
   let assertSubcategory: jest.Mock;
@@ -17,6 +18,7 @@ describe('SkillsService', () => {
   beforeEach(async () => {
     create = jest.fn((payload: Partial<Skill>) => payload as Skill);
     save = jest.fn();
+    findSkill = jest.fn();
     findUser = jest.fn();
     saveUser = jest.fn();
     assertSubcategory = jest.fn();
@@ -28,6 +30,7 @@ describe('SkillsService', () => {
           provide: getRepositoryToken(Skill),
           useValue: {
             create,
+            findOne: findSkill,
             save,
           },
         },
@@ -131,5 +134,34 @@ describe('SkillsService', () => {
     ).resolves.toBeUndefined();
 
     expect(saveUser).toHaveBeenCalledWith(user);
+  });
+     
+  it('adds a skill to favorites', async () => {
+    const skill = { id: 'skill-1' } as Skill;
+    const user = { id: 'user-1', favoriteSkills: [] } as unknown as User;
+    findSkill.mockResolvedValue(skill);
+    findUser.mockResolvedValue(user);
+    saveUser.mockResolvedValue(user);
+
+    await expect(service.addToFavorites('skill-1', 'user-1')).resolves.toEqual(
+      skill,
+    );
+
+    expect(user.favoriteSkills).toEqual([skill]);
+    expect(saveUser).toHaveBeenCalledWith(user);
+  });
+
+  it('rejects adding a skill that is already in favorites', async () => {
+    const skill = { id: 'skill-1' } as Skill;
+    findSkill.mockResolvedValue(skill);
+    findUser.mockResolvedValue({
+      id: 'user-1',
+      favoriteSkills: [skill],
+    } as User);
+
+    await expect(
+      service.addToFavorites('skill-1', 'user-1'),
+    ).rejects.toMatchObject({ status: 409 });
+    expect(saveUser).not.toHaveBeenCalled();
   });
 });
