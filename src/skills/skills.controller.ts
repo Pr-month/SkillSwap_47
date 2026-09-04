@@ -61,4 +61,11 @@ export class SkillsController {
     const userId = req.user.id;
     return this.skillsService.remove(id, userId);
   }
+
+  @Delete(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeFavorite(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.skillsService.removeFavorite(id, req.user.id);
+  }
 }
