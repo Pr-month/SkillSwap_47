@@ -15,6 +15,8 @@ import { appConfig, IConfig } from '../config/app.config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -33,14 +35,32 @@ export class UsersService {
     return 'This action adds a new user';
   }
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find({
+  async findAll(query: GetUsersQueryDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.usersRepository.findAndCount({
       relations: {
         skills: { category: true },
         wantToLearn: true,
       },
       order: { name: 'ASC' },
+      skip,
+      take: limit,
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    if (page > totalPages && totalPages > 0) {
+      throw new NotFoundException(`Страница ${page} не найдена`);
+    }
+
+    return {
+      data,
+      page,
+      totalPages,
+    };
   }
 
   findOne(id: number) {
