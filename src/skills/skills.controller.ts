@@ -39,6 +39,15 @@ export class SkillsController {
     return this.skillsService.create(createSkillDto, userId);
   }
 
+  @Post(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  addToFavorites(
+    @Param('id') skillId: string,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.skillsService.addToFavorites(skillId, userId);
+  }
+
   @Get()
   findAll(@Query() query: FindSkillsQueryDto) {
     return this.skillsService.findAll(query);
