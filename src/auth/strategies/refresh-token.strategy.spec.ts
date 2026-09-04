@@ -1,3 +1,4 @@
+import { Roles } from '../../common/enums/user-role.enum';
 import { IJwtConfig } from '../../config/jwt.config';
 import { RefreshTokenStrategy } from './refresh-token.strategy';
 
@@ -18,7 +19,7 @@ describe('RefreshTokenStrategy', () => {
     const payload = {
       sub: 'user-id',
       email: 'user@mail.com',
-      role: 'user',
+      role: Roles.USER,
     };
 
     expect(
