@@ -12,7 +12,6 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { FindSkillsQueryDto } from './dto/find-skills-query.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from './entities/skill.entity';
-import { User } from '../users/entities/user.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -66,6 +65,19 @@ export class SkillsService {
 
   findOne(id: string) {
     return `This action returns a #${id} skill`;
+  }
+
+  async findById(id: string): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: { owner: true, category: true },
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID ${id} не найден`);
+    }
+
+    return skill;
   }
 
   async addToFavorites(skillId: string, userId: string): Promise<Skill> {

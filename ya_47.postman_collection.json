@@ -179,6 +179,34 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "post_requests",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"offeredSkillId\": \"uuid-вашего-навыка\",\n  \"requestedSkillId\": \"uuid-чужого-навыка\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/requests",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "requests"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [

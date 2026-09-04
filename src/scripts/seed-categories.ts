@@ -41,6 +41,6 @@ seedCategories()
     .catch((error) => console.error(`Ошибка сидинга категорий: ${error}`))
     .finally(() => {
         if (AppDataSource.isInitialized) {
-            AppDataSource.destroy()
+            void AppDataSource.destroy();
         }
     });

@@ -11,11 +11,11 @@ import { Skill } from '../../skills/entities/skill.entity';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('requests')
-export class Request {
+export class SkillRequest {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
   @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
