@@ -15,7 +15,6 @@ import { appConfig, IConfig } from '../config/app.config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -46,11 +45,6 @@ export class UsersService {
 
   findOne(id: number) {
     return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    void updateUserDto;
-    return `This action updates a #${id} user`;
   }
 
   async updatePassword(userId: string, dto: UpdatePasswordDto) {
