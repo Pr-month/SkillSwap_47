@@ -102,6 +102,40 @@ describe('SkillsService', () => {
     );
   });
 
+  it('removes a skill from the authenticated user favorites', async () => {
+    const favoriteSkill = { id: 'skill-1' } as Skill;
+    const otherSkill = { id: 'skill-2' } as Skill;
+    const user = {
+      id: 'user-1',
+      favoriteSkills: [favoriteSkill, otherSkill],
+    } as User;
+    findUser.mockResolvedValue(user);
+
+    await expect(
+      service.removeFavorite('skill-1', 'user-1'),
+    ).resolves.toBeUndefined();
+
+    expect(findUser).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      relations: { favoriteSkills: true },
+    });
+    expect(saveUser).toHaveBeenCalledWith({
+      ...user,
+      favoriteSkills: [otherSkill],
+    });
+  });
+
+  it('keeps the operation successful when the skill is not in favorites', async () => {
+    const user = { id: 'user-1', favoriteSkills: [] } as unknown as User;
+    findUser.mockResolvedValue(user);
+
+    await expect(
+      service.removeFavorite('skill-1', 'user-1'),
+    ).resolves.toBeUndefined();
+
+    expect(saveUser).toHaveBeenCalledWith(user);
+  });
+     
   it('adds a skill to favorites', async () => {
     const skill = { id: 'skill-1' } as Skill;
     const user = { id: 'user-1', favoriteSkills: [] } as unknown as User;
