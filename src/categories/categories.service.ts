@@ -1,12 +1,13 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, QueryFailedError, Repository } from 'typeorm';
 import { CATEGORIES_SEED } from './categories.data';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -157,6 +158,31 @@ export class CategoriesService implements OnModuleInit {
       name: saved.name,
       parentId: saved.parent?.id ?? null,
     };
+  }
+
+  async remove(id: string): Promise<void> {
+    const category = await this.categoriesRepository.findOne({
+      where: { id },
+    });
+
+    if (!category) {
+      throw new NotFoundException('Категория не найдена');
+    }
+
+    try {
+      await this.categoriesRepository.remove(category);
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error.driverError as { code?: string })?.code === '23503'
+      ) {
+        throw new ConflictException(
+          'Нельзя удалить категорию, пока к ней привязаны навыки',
+        );
+      }
+
+      throw error;
+    }
   }
 
   async assertSubcategory(
