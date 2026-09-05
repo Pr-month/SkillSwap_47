@@ -12,7 +12,6 @@ import { CreateSkillDto } from './dto/create-skill.dto';
 import { FindSkillsQueryDto } from './dto/find-skills-query.dto';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { Skill } from './entities/skill.entity';
-import { User } from '../users/entities/user.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
