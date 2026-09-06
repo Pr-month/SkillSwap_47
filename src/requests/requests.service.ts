@@ -19,6 +19,7 @@ export class RequestsService {
   ) {}
 
   create(createRequestDto: CreateRequestDto) {
+    console.log(createRequestDto);
     return `This action creates a new requests`;
   }
 
@@ -31,6 +32,7 @@ export class RequestsService {
   }
 
   update(id: number, updateRequestDto: UpdateRequestDto) {
+    console.log(updateRequestDto);
     return `This action updates a #${id} request`;
   }
 
