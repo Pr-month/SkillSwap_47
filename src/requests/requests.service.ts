@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Request } from './entities/request.entity';
@@ -14,7 +18,7 @@ export class RequestsService {
     private readonly requestsRepository: Repository<Request>,
   ) {}
 
-  create( createRequestDto: CreateRequestDto) {
+  create(createRequestDto: CreateRequestDto) {
     return `This action creates a new requests`;
   }
 
@@ -51,5 +55,4 @@ export class RequestsService {
 
     return { message: `Заявка с ID ${requestId} успешно удалена` };
   }
-
 }
