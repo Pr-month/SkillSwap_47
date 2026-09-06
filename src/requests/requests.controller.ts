@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpCode, HttpStatus, Req } from '@nestjs/common';
 import { RequestsService } from './requests.service';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { AuthRequest  } from 'src/auth/auth.types';
+
 
 @Controller('requests')
 export class RequestsController {
@@ -27,8 +30,12 @@ export class RequestsController {
     return this.requestsService.update(+id, updateRequestDto);
   }
 
+  @HttpCode(HttpStatus.OK)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.requestsService.remove(+id);
+  async deleteRequest(
+    @Param('id') requestId: string,
+    @Req() req: AuthRequest  
+  ) {
+    return this.requestsService.remove(requestId, req.user);
   }
 }
