@@ -12,7 +12,6 @@ import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
 import { appConfig, IConfig } from '../config/app.config';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
@@ -28,11 +27,6 @@ export class UsersService {
     private readonly citiesService: CitiesService,
     private readonly categoriesService: CategoriesService,
   ) {}
-
-  create(createUserDto: CreateUserDto) {
-    void createUserDto;
-    return 'This action adds a new user';
-  }
 
   async findAll(query: GetUsersQueryDto) {
     const page = query.page || 1;
