@@ -12,6 +12,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles as UserRole } from '../common/enums/user-role.enum';
 import { CategoriesService } from './categories.service';
+import { CategoryTreeDto } from './dto/category-tree.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
@@ -20,7 +21,7 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  findTree() {
+  findTree(): Promise<CategoryTreeDto[]> {
     return this.categoriesService.findTree();
   }
 

@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { CATEGORIES_SEED } from './categories.data';
+import { CategoryTreeDto } from './dto/category-tree.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
@@ -45,20 +46,22 @@ export class CategoriesService implements OnModuleInit {
     }
   }
 
-  async findTree() {
+  async findTree(): Promise<CategoryTreeDto[]> {
     const categories = await this.categoriesRepository.find({
       where: { parent: IsNull() },
       relations: { children: true },
       order: { name: 'ASC' },
     });
 
-    return categories.map((category) => ({
-      id: category.id,
-      name: category.name,
-      children: (category.children ?? [])
-        .map((child) => ({ id: child.id, name: child.name }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
-    }));
+    return categories.map(
+      (category): CategoryTreeDto => ({
+        id: category.id,
+        name: category.name,
+        children: (category.children ?? [])
+          .map((child) => ({ id: child.id, name: child.name }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'ru')),
+      }),
+    );
   }
 
   async create(dto: CreateCategoryDto): Promise<{
