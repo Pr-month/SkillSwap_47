@@ -19,8 +19,12 @@ export class RequestsController {
   constructor(private readonly requestsService: RequestsService) {}
 
   @Post()
-  create(@Body() createRequestDto: CreateRequestDto) {
-    return this.requestsService.create(createRequestDto);
+  @UseGuards(JwtAuthGuard)
+  create(
+    @CurrentUser('sub') senderId: string,
+    @Body() createRequestDto: CreateRequestDto,
+  ) {
+    return this.requestsService.create(senderId, createRequestDto);
   }
 
   @Get()
