@@ -9,25 +9,16 @@ import {
   HttpCode,
   HttpStatus,
   Req,
-} from '@nestjs/common';
-import { RequestsService } from './requests.service';
-import { CreateRequestDto } from './dto/create-request.dto';
-import { UpdateRequestDto } from './dto/update-request.dto';
-import { AuthRequest } from 'src/auth/auth.types';
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
   UseGuards,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import type { JwtPayload } from '@supabase/auth-js';
+import { AuthRequest } from 'src/auth/auth.types';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestsService } from './requests.service';
+
 
 @Controller('requests')
 export class RequestsController {
@@ -65,7 +56,8 @@ export class RequestsController {
 
   @HttpCode(HttpStatus.OK)
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   async deleteRequest(@Param('id') requestId: string, @Req() req: AuthRequest) {
-    return this.requestsService.remove(requestId, req.user);
+    return this.requestsService.remove(requestId, req.user as JwtPayload);
   }
 }
