@@ -135,7 +135,7 @@ describe('SkillsService', () => {
 
     expect(saveUser).toHaveBeenCalledWith(user);
   });
-     
+
   it('adds a skill to favorites', async () => {
     const skill = { id: 'skill-1' } as Skill;
     const user = { id: 'user-1', favoriteSkills: [] } as unknown as User;

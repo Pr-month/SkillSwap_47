@@ -42,7 +42,7 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
     JwtAuthGuard,
     RefreshTokenStrategy,
     RefreshTokenGuard,
-    RolesGuard
+    RolesGuard,
   ],
   exports: [JwtModule, JwtAuthGuard, RefreshTokenGuard, RolesGuard],
 })
