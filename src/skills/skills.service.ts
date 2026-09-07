@@ -67,6 +67,19 @@ export class SkillsService {
     return `This action returns a #${id} skill`;
   }
 
+  async findById(id: string): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: { owner: true, category: true },
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID ${id} не найден`);
+    }
+
+    return skill;
+  }
+
   async addToFavorites(skillId: string, userId: string): Promise<Skill> {
     const skill = await this.skillsRepository.findOne({
       where: { id: skillId },
@@ -95,9 +108,35 @@ export class SkillsService {
     return skill;
   }
 
-  update(id: string, updateSkillDto: UpdateSkillDto) {
-    void updateSkillDto;
-    return `This action updates a #${id} skill`;
+  async update(
+    id: string,
+    updateSkillDto: UpdateSkillDto,
+    userId: string,
+  ): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: { owner: true, category: true },
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID ${id} не найден`);
+    }
+
+    if (String(skill.owner.id) !== String(userId)) {
+      throw new ForbiddenException(
+        'Недостаточно прав. Вы можете изменять только свои навыки',
+      );
+    }
+
+    const { categoryId, ...rest } = updateSkillDto;
+
+    Object.assign(skill, rest);
+
+    if (categoryId !== undefined) {
+      skill.category = await this.categoriesService.findById(categoryId);
+    }
+
+    return this.skillsRepository.save(skill);
   }
 
   async remove(id: string, userId: string): Promise<void> {

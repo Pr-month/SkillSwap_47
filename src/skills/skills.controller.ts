@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -53,8 +54,13 @@ export class SkillsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSkillDto: UpdateSkillDto) {
-    return this.skillsService.update(id, updateSkillDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSkillDto: UpdateSkillDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.skillsService.update(id, updateSkillDto, userId);
   }
 
   @Delete(':id')

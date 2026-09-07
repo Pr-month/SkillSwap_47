@@ -88,8 +88,14 @@ export class UsersService {
     return { message: 'Пароль успешно обновлён' };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<{ message: string }> {
+    const result = await this.usersRepository.delete({ id });
+
+    if (!result.affected) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return { message: 'Пользователь успешно удалён' };
   }
 
   findByEmail(email: string): Promise<User | null> {
