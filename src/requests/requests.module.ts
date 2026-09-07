@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Request } from './entities/request.entity';
 import { SkillsModule } from '../skills/skills.module';
 import { SkillRequest } from './entities/request.entity';
 import { RequestsController } from './requests.controller';

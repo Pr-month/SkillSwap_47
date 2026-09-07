@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RequestStatus } from '../common/enums/request-status.enum';
+import { Request } from './entities/request.entity';
 import { SkillsService } from '../skills/skills.service';
 import { SkillRequest } from './entities/request.entity';
 import { RequestsService } from './requests.service';
