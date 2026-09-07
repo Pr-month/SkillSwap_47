@@ -67,6 +67,19 @@ export class SkillsService {
     return `This action returns a #${id} skill`;
   }
 
+  async findById(id: string): Promise<Skill> {
+    const skill = await this.skillsRepository.findOne({
+      where: { id },
+      relations: { owner: true, category: true },
+    });
+
+    if (!skill) {
+      throw new NotFoundException(`Навык с ID ${id} не найден`);
+    }
+
+    return skill;
+  }
+
   async addToFavorites(skillId: string, userId: string): Promise<Skill> {
     const skill = await this.skillsRepository.findOne({
       where: { id: skillId },

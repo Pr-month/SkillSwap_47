@@ -9,6 +9,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
+import { Roles } from '../common/enums/user-role.enum';
 import { appConfig } from '../config/app.config';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -19,14 +20,16 @@ describe('UsersService', () => {
   let update: jest.Mock;
   let save: jest.Mock;
   let findByName: jest.Mock;
-  let usersRepository: { find: jest.Mock; update: jest.Mock };
+  let findAndCount: jest.Mock;
+  let deleteUser: jest.Mock;
 
   beforeEach(async () => {
     findOne = jest.fn();
     update = jest.fn();
     save = jest.fn();
     findByName = jest.fn();
-    usersRepository = { find: jest.fn(), update };
+    findAndCount = jest.fn();
+    deleteUser = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,10 +37,11 @@ describe('UsersService', () => {
         {
           provide: getRepositoryToken(User),
           useValue: {
-            ...usersRepository,
+            findAndCount,
             findOne,
             save,
             update,
+            delete: deleteUser,
           },
         },
         {
@@ -72,7 +76,7 @@ describe('UsersService', () => {
       city: 'Москва',
       gender: 'male',
       avatar: '',
-      role: 'user',
+      role: Roles.USER,
       skills: [],
       wantToLearn: [],
       favoriteSkills: [],
@@ -100,16 +104,40 @@ describe('UsersService', () => {
 
   it('should return users with their public relations', async () => {
     const users = [{ id: 'user-id', name: 'Анна' } as User];
-    usersRepository.find.mockResolvedValue(users);
+    findAndCount.mockResolvedValue([users, 1]);
 
-    await expect(service.findAll()).resolves.toEqual(users);
-    expect(usersRepository.find).toHaveBeenCalledWith({
+    await expect(service.findAll({})).resolves.toEqual({
+      data: users,
+      page: 1,
+      totalPages: 1,
+    });
+    expect(findAndCount).toHaveBeenCalledWith({
       relations: {
         skills: { category: true },
         wantToLearn: true,
       },
       order: { name: 'ASC' },
+      skip: 0,
+      take: 20,
     });
+  });
+
+  it('should delete a user', async () => {
+    const userId = 'd0bd1721-bfef-41ae-a4dc-181a54627089';
+    deleteUser.mockResolvedValue({ affected: 1 });
+
+    await expect(service.remove(userId)).resolves.toEqual({
+      message: 'Пользователь успешно удалён',
+    });
+    expect(deleteUser).toHaveBeenCalledWith({ id: userId });
+  });
+
+  it('should throw if the user to delete does not exist', async () => {
+    deleteUser.mockResolvedValue({ affected: 0 });
+
+    await expect(
+      service.remove('d0bd1721-bfef-41ae-a4dc-181a54627089'),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('updatePassword changes the password after verifying the current one', async () => {
@@ -154,7 +182,7 @@ describe('UsersService', () => {
       city: 'Москва',
       gender: 'male',
       avatar: '',
-      role: 'user',
+      role: Roles.USER,
       skills: [],
       wantToLearn: [],
       favoriteSkills: [],

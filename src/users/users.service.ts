@@ -15,7 +15,6 @@ import { appConfig, IConfig } from '../config/app.config';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { User } from './entities/user.entity';
 
@@ -89,8 +88,14 @@ export class UsersService {
     return { message: 'Пароль успешно обновлён' };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<{ message: string }> {
+    const result = await this.usersRepository.delete({ id });
+
+    if (!result.affected) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return { message: 'Пользователь успешно удалён' };
   }
 
   findByEmail(email: string): Promise<User | null> {
