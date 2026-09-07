@@ -1,11 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
-  Injectable,
+  ForbiddenException, Injectable
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,7 +9,6 @@ import { RequestStatus } from '../common/enums/request-status.enum';
 import { SkillsService } from '../skills/skills.service';
 import { User } from '../users/entities/user.entity';
 import { CreateRequestDto } from './dto/create-request.dto';
-import { Request } from './entities/request.entity';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { SkillRequest } from './entities/request.entity';
 
@@ -88,7 +83,7 @@ export class RequestsService {
     return `This action returns all requests`;
   }
 
-  async findIncoming(userId: string): Promise<Request[]> {
+  async findIncoming(userId: string): Promise<SkillRequest[]> {
     return this.requestsRepository.find({
       where: { receiver: { id: userId } },
       relations: {
