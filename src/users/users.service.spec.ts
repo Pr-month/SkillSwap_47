@@ -9,6 +9,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
+import { Roles } from '../common/enums/user-role.enum';
 import { appConfig } from '../config/app.config';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -75,7 +76,7 @@ describe('UsersService', () => {
       city: 'Москва',
       gender: 'male',
       avatar: '',
-      role: 'user',
+      role: Roles.USER,
       skills: [],
       wantToLearn: [],
       favoriteSkills: [],
@@ -181,7 +182,7 @@ describe('UsersService', () => {
       city: 'Москва',
       gender: 'male',
       avatar: '',
-      role: 'user',
+      role: Roles.USER,
       skills: [],
       wantToLearn: [],
       favoriteSkills: [],
