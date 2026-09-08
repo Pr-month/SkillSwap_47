@@ -15,7 +15,6 @@ import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { SkillRequest } from './entities/request.entity';
 
-
 @Injectable()
 export class RequestsService {
   constructor(
@@ -37,9 +36,7 @@ export class RequestsService {
     ]);
 
     if (offeredSkill.owner.id !== senderId) {
-      throw new ForbiddenException(
-        'Предложить можно только свой навык',
-      );
+      throw new ForbiddenException('Предложить можно только свой навык');
     }
 
     if (requestedSkill.owner.id === senderId) {
@@ -103,9 +100,29 @@ export class RequestsService {
     return `This action returns a #${id} request`;
   }
 
-  update(id: number, updateRequestDto: UpdateRequestDto) {
-    void updateRequestDto;
-    return `This action updates a #${id} request`;
+  async update(id: string, userId: string, dto: UpdateRequestDto) {
+    const request = await this.requestsRepository.findOne({
+      where: { id },
+      relations: {
+        sender: true,
+        receiver: true,
+        offeredSkill: { category: true },
+        requestedSkill: { category: true },
+      },
+    });
+
+    if (!request) {
+      throw new NotFoundException('Заявка не найдена');
+    }
+
+    if (request.receiver.id !== userId) {
+      throw new ForbiddenException('Можно обновлять только входящие заявки');
+    }
+
+    request.status = dto.status;
+    request.isRead = true;
+
+    return this.requestsRepository.save(request);
   }
 
   async remove(requestId: string, user: JwtPayload) {
@@ -118,7 +135,7 @@ export class RequestsService {
       throw new NotFoundException('Запрос не найден');
     }
 
-    const isAdmin = user.role === Roles.ADMIN;
+    const isAdmin = user.role === (Roles.ADMIN as string);
     const isOwner = request.sender.id === user.sub;
 
     if (!isAdmin && !isOwner) {
