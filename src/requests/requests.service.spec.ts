@@ -1,8 +1,11 @@
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RequestStatus } from '../common/enums/request-status.enum';
-import { Request } from './entities/request.entity';
 import { SkillsService } from '../skills/skills.service';
 import { SkillRequest } from './entities/request.entity';
 import { RequestsService } from './requests.service';
@@ -17,7 +20,9 @@ describe('RequestsService', () => {
   beforeEach(async () => {
     findById = jest.fn();
     findOne = jest.fn();
-    create = jest.fn((payload: Partial<SkillRequest>) => payload as SkillRequest);
+    create = jest.fn(
+      (payload: Partial<SkillRequest>) => payload as SkillRequest,
+    );
     save = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -52,9 +57,9 @@ describe('RequestsService', () => {
     };
     const saved = { id: 'request-1' };
 
-    findById.mockResolvedValueOnce(offeredSkill).mockResolvedValueOnce(
-      requestedSkill,
-    );
+    findById
+      .mockResolvedValueOnce(offeredSkill)
+      .mockResolvedValueOnce(requestedSkill);
     findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(saved);
     save.mockResolvedValue(saved);
 
@@ -77,7 +82,10 @@ describe('RequestsService', () => {
   it('create rejects offering a skill that belongs to another user', async () => {
     findById
       .mockResolvedValueOnce({ id: 'offered-1', owner: { id: 'other' } })
-      .mockResolvedValueOnce({ id: 'requested-1', owner: { id: 'receiver-1' } });
+      .mockResolvedValueOnce({
+        id: 'requested-1',
+        owner: { id: 'receiver-1' },
+      });
 
     await expect(
       service.create('sender-1', {
@@ -98,5 +106,57 @@ describe('RequestsService', () => {
         requestedSkillId: 'requested-1',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it.each(Object.values(RequestStatus))(
+    'update sets status %s and marks incoming request as read',
+    async (status) => {
+      const request = {
+        id: 'req-1',
+        status: RequestStatus.PENDING,
+        isRead: false,
+        receiver: { id: 'receiver-1' },
+        sender: { id: 'sender-1' },
+      };
+      findOne.mockResolvedValue(request);
+      save.mockImplementation((entity: SkillRequest) => entity);
+
+      const result = await service.update('req-1', 'receiver-1', { status });
+
+      expect(save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status,
+          isRead: true,
+        }),
+      );
+      expect(result.status).toBe(status);
+      expect(result.isRead).toBe(true);
+    },
+  );
+
+  it('update rejects when request is not found', async () => {
+    findOne.mockResolvedValue(null);
+
+    await expect(
+      service.update('missing', 'receiver-1', {
+        status: RequestStatus.ACCEPTED,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('update rejects when user is not the receiver', async () => {
+    findOne.mockResolvedValue({
+      id: 'req-1',
+      status: RequestStatus.PENDING,
+      isRead: false,
+      receiver: { id: 'receiver-1' },
+    });
+
+    await expect(
+      service.update('req-1', 'sender-1', {
+        status: RequestStatus.ACCEPTED,
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(save).not.toHaveBeenCalled();
   });
 });

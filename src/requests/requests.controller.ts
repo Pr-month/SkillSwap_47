@@ -5,6 +5,7 @@ import {
   Body,
   Patch,
   Param,
+  ParseUUIDPipe,
   Delete,
   HttpCode,
   HttpStatus,
@@ -18,7 +19,6 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestsService } from './requests.service';
-
 
 @Controller('requests')
 export class RequestsController {
@@ -50,8 +50,13 @@ export class RequestsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRequestDto: UpdateRequestDto) {
-    return this.requestsService.update(+id, updateRequestDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser('sub') userId: string,
+    @Body() updateRequestDto: UpdateRequestDto,
+  ) {
+    return this.requestsService.update(id, userId, updateRequestDto);
   }
 
   @HttpCode(HttpStatus.OK)
