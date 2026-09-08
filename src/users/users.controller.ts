@@ -7,7 +7,6 @@ import {
   Param,
   ParseUUIDPipe,
   Patch,
-  Post,
   Query,
   UseGuards,
   UseInterceptors,
@@ -17,7 +16,6 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles as UserRole } from '../common/enums/user-role.enum';
-import { CreateUserDto } from './dto/create-user.dto';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
@@ -27,11 +25,6 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
 
   @Get()
   findAll(@Query() query: GetUsersQueryDto) {
