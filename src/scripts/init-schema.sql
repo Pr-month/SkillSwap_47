@@ -57,3 +57,26 @@ CREATE TABLE IF NOT EXISTS users_favorite_skills (
   "skillsId" uuid NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
   PRIMARY KEY ("usersId", "skillsId")
 );
+
+DO $$ BEGIN
+  CREATE TYPE requests_status_enum AS ENUM (
+    'pending',
+    'accepted',
+    'rejected',
+    'inProgress',
+    'done'
+  );
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE TABLE IF NOT EXISTS requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  "createdAt" timestamptz NOT NULL DEFAULT now(),
+  status requests_status_enum NOT NULL DEFAULT 'pending',
+  "isRead" boolean NOT NULL DEFAULT false,
+  "senderId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "receiverId" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "offeredSkillId" uuid NOT NULL REFERENCES skills(id) ON DELETE RESTRICT,
+  "requestedSkillId" uuid NOT NULL REFERENCES skills(id) ON DELETE RESTRICT
+);

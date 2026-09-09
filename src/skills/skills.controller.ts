@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -18,13 +19,7 @@ import { UpdateSkillDto } from './dto/update-skill.dto';
 import { SkillsService } from './skills.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { Request } from 'express';
-
-interface RequestWithUser extends Request {
-  user: {
-    id: string;
-  };
-}
+import { AuthRequest } from '../auth/auth.types';
 
 @Controller('skills')
 export class SkillsController {
@@ -39,6 +34,15 @@ export class SkillsController {
     return this.skillsService.create(createSkillDto, userId);
   }
 
+  @Post(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  addToFavorites(
+    @Param('id') skillId: string,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.skillsService.addToFavorites(skillId, userId);
+  }
+
   @Get()
   findAll(@Query() query: FindSkillsQueryDto) {
     return this.skillsService.findAll(query);
@@ -50,15 +54,27 @@ export class SkillsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSkillDto: UpdateSkillDto) {
-    return this.skillsService.update(id, updateSkillDto);
+  @UseGuards(JwtAuthGuard)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSkillDto: UpdateSkillDto,
+    @CurrentUser('sub') userId: string,
+  ) {
+    return this.skillsService.update(id, updateSkillDto, userId);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string, @Req() req: RequestWithUser) {
-    const userId = req.user.id;
+  remove(@Param('id') id: string, @Req() req: AuthRequest) {
+    const userId = req.user.sub;
     return this.skillsService.remove(id, userId);
+  }
+
+  @Delete(':id/favorite')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeFavorite(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.skillsService.removeFavorite(id, req.user.sub);
   }
 }

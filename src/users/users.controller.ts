@@ -5,17 +5,20 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
-  Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { CreateUserDto } from './dto/create-user.dto';
+import { Roles as UserRole } from '../common/enums/user-role.enum';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @UseInterceptors(ClassSerializerInterceptor)
@@ -23,14 +26,9 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query() query: GetUsersQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get('me')
@@ -62,13 +60,10 @@ export class UsersController {
     return this.usersService.findOne(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
-  }
-
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersService.remove(id);
   }
 }

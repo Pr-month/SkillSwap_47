@@ -12,10 +12,9 @@ import { Repository } from 'typeorm';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
 import { appConfig, IConfig } from '../config/app.config';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -29,28 +28,36 @@ export class UsersService {
     private readonly categoriesService: CategoriesService,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
-    void createUserDto;
-    return 'This action adds a new user';
-  }
+  async findAll(query: GetUsersQueryDto) {
+    const page = query.page || 1;
+    const limit = query.limit || 20;
+    const skip = (page - 1) * limit;
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find({
+    const [data, total] = await this.usersRepository.findAndCount({
       relations: {
         skills: { category: true },
         wantToLearn: true,
       },
       order: { name: 'ASC' },
+      skip,
+      take: limit,
     });
+
+    const totalPages = Math.ceil(total / limit);
+
+    if (page > totalPages && totalPages > 0) {
+      throw new NotFoundException(`Страница ${page} не найдена`);
+    }
+
+    return {
+      data,
+      page,
+      totalPages,
+    };
   }
 
   findOne(id: number) {
     return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    void updateUserDto;
-    return `This action updates a #${id} user`;
   }
 
   async updatePassword(userId: string, dto: UpdatePasswordDto) {
@@ -75,8 +82,14 @@ export class UsersService {
     return { message: 'Пароль успешно обновлён' };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<{ message: string }> {
+    const result = await this.usersRepository.delete({ id });
+
+    if (!result.affected) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return { message: 'Пользователь успешно удалён' };
   }
 
   findByEmail(email: string): Promise<User | null> {

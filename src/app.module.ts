@@ -13,6 +13,7 @@ import { GendersModule } from './genders/genders.module';
 import { SkillsModule } from './skills/skills.module';
 import { UsersModule } from './users/users.module';
 import { UploadModule } from './upload/upload.module';
+import { RequestsModule } from './requests/requests.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { UploadModule } from './upload/upload.module';
     GendersModule,
     SkillsModule,
     UploadModule,
+    RequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
