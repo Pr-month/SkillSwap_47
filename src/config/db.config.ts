@@ -16,9 +16,9 @@ export const databaseConfig = registerAs(
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     synchronize: process.env.NODE_ENV !== 'production',
     logging: false,
-    ssl: {
-      rejectUnauthorized: false,
-    },
+        ssl: process.env.NODE_ENV === 'test'
+      ? false
+      : { rejectUnauthorized: false },
   }),
 );
 
