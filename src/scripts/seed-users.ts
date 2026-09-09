@@ -1,37 +1,8 @@
 import * as bcrypt from 'bcrypt';
-import { UserGender } from 'src/common/enums/user-gender.enum';
 import { Roles } from 'src/common/enums/user-role.enum';
 import { AppDataSource } from 'src/config/ormconfig';
 import { User } from 'src/users/entities/user.entity';
-
-const TEST_USER_PASSWORD = 'User1234!';
-
-const TEST_USERS = [
-  {
-    name: 'Анна',
-    email: 'anna@skillswap.local',
-    about: 'Люблю обмен навыками',
-    birthdate: '1995-03-15',
-    city: 'Москва',
-    gender: UserGender.FEMALE,
-  },
-  {
-    name: 'Иван',
-    email: 'ivan@skillswap.local',
-    about: 'Люблю обмен навыками',
-    birthdate: '1992-07-22',
-    city: 'Санкт-Петербург',
-    gender: UserGender.MALE,
-  },
-  {
-    name: 'Мария',
-    email: 'maria@skillswap.local',
-    about: 'Люблю обмен навыками',
-    birthdate: '1998-11-08',
-    city: 'Казань',
-    gender: UserGender.FEMALE,
-  },
-] as const;
+import { TEST_USER_PASSWORD, TEST_USERS } from './seed-users.data';
 
 async function seedUsers() {
   if (!AppDataSource.isInitialized) {
@@ -43,32 +14,6 @@ async function seedUsers() {
 
   let createdCount = 0;
   let skippedCount = 0;
-
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@skillswap.local';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
-
-  const existingAdmin = await usersRepo.findOne({ where: { email: adminEmail } });
-  if (existingAdmin) {
-    console.log('Сидинг администратора пропущен');
-    skippedCount += 1;
-  } else {
-    const passwordHash = await bcrypt.hash(adminPassword, saltRounds);
-    const admin = usersRepo.create({
-      name: 'Admin',
-      email: adminEmail,
-      password: passwordHash,
-      about: null,
-      birthdate: '1990-01-01',
-      city: 'Москва',
-      gender: UserGender.MALE,
-      avatar: '',
-      role: Roles.ADMIN,
-      refreshToken: null,
-    });
-    await usersRepo.save(admin);
-    console.log('Сидинг администратора успешно завершен');
-    createdCount += 1;
-  }
 
   const testPasswordHash = await bcrypt.hash(TEST_USER_PASSWORD, saltRounds);
 
