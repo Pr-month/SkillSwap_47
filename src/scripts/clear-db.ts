@@ -8,9 +8,8 @@ async function clearDb() {
   await AppDataSource.synchronize(true);
 }
 
-clearDb()
-  .finally(async () => {
-    if (AppDataSource.isInitialized) {
-      await AppDataSource.destroy();
-    }
-  });
+void clearDb().finally(() => {
+  if (AppDataSource.isInitialized) {
+    void AppDataSource.destroy();
+  }
+});
