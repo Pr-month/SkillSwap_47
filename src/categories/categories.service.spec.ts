@@ -178,7 +178,7 @@ describe('CategoriesService', () => {
       findOne
         .mockResolvedValueOnce(category)
         .mockResolvedValueOnce(newParent);
-      save.mockImplementation(async (entity: Category) => entity);
+      save.mockImplementation((entity: Category) => entity);
 
       await expect(
         service.update('cat-1', { parentId: 'new-root' }),
@@ -352,7 +352,7 @@ describe('CategoriesService', () => {
 
     it('seeds categories when repository is empty', async () => {
       count.mockResolvedValue(0);
-      save.mockImplementation(async (entity: Category | Category[]) => entity);
+      save.mockImplementation((entity: Category | Category[]) => entity);
 
       await service.onModuleInit();
 
