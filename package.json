@@ -17,12 +17,13 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "cross-env NODE_ENV=test npm run clear-db && npm run seed:admin && npm run seed:users && npm run seed:cities && npm run seed:categories && jest --config ./test/jest-e2e.json",
+    "test:e2e": "cross-env NODE_ENV=test npm run clear-db && npm run seed:admin && npm run seed:users && num run seed:skills && npm run seed:cities && npm run seed:categories && jest --config ./test/jest-e2e.json",
     "seed:categories": "ts-node -r tsconfig-paths/register src/scripts/seed-categories.ts",
     "seed:cities": "ts-node -r tsconfig-paths/register src/scripts/seed-cities.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/scripts/seed-admin.ts",
     "seed:users": "ts-node -r tsconfig-paths/register src/scripts/seed-users.ts",
-    "clear-db": "ts-node -r tsconfig-paths/register src/scripts/clear-db.ts"
+    "clear-db": "ts-node -r tsconfig-paths/register src/scripts/clear-db.ts",
+    "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

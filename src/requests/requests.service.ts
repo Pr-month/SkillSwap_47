@@ -96,6 +96,18 @@ export class RequestsService {
     });
   }
 
+  async findOutgoing(userId: string): Promise<SkillRequest[]> {
+    return this.requestsRepository.find({
+      where: { sender: { id: userId } },
+      relations: {
+        receiver: true,
+        offeredSkill: { category: true },
+        requestedSkill: { category: true },
+      },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   findOne(id: number) {
     return `This action returns a #${id} request`;
   }
