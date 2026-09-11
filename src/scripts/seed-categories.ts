@@ -37,9 +37,9 @@ async function seedCategories() {
 }
 
 seedCategories()
-    .catch((error) => console.error(`Ошибка сидинга категорий: ${error}`))
-    .finally(() => {
-        if (AppDataSource.isInitialized) {
-            void AppDataSource.destroy();
-        }
-    });
+  .catch((error) => console.error(`Ошибка сидинга категорий: ${error}`))
+  .finally(() => {
+    if (AppDataSource.isInitialized) {
+      void AppDataSource.destroy();
+    }
+  });
