@@ -14,12 +14,14 @@ describe('RequestsService', () => {
   let service: RequestsService;
   let findById: jest.Mock;
   let findOne: jest.Mock;
+  let find: jest.Mock;
   let create: jest.Mock;
   let save: jest.Mock;
 
   beforeEach(async () => {
     findById = jest.fn();
     findOne = jest.fn();
+    find = jest.fn();
     create = jest.fn(
       (payload: Partial<SkillRequest>) => payload as SkillRequest,
     );
@@ -30,7 +32,7 @@ describe('RequestsService', () => {
         RequestsService,
         {
           provide: getRepositoryToken(SkillRequest),
-          useValue: { findOne, create, save },
+          useValue: { findOne, find, create, save },
         },
         {
           provide: SkillsService,
@@ -158,5 +160,23 @@ describe('RequestsService', () => {
       }),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(save).not.toHaveBeenCalled();
+  });
+
+  it('findOutgoing returns requests sent by the user with newest first', async () => {
+    const requests = [{ id: 'req-1' }];
+    find.mockResolvedValue(requests);
+
+    const result = await service.findOutgoing('sender-1');
+
+    expect(find).toHaveBeenCalledWith({
+      where: { sender: { id: 'sender-1' } },
+      relations: {
+        receiver: true,
+        offeredSkill: { category: true },
+        requestedSkill: { category: true },
+      },
+      order: { createdAt: 'DESC' },
+    });
+    expect(result).toBe(requests);
   });
 });
