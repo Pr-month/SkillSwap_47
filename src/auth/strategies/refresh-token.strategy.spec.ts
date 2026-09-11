@@ -59,11 +59,14 @@ describe('RefreshTokenStrategy', () => {
     const strategy = new RefreshTokenStrategy(config);
 
     expect(
-      strategy.validate({ body: {}, headers: {} } as never, {
-        sub: 'user-id',
-        email: 'user@mail.com',
-        role: Roles.USER,
-      } as never),
+      strategy.validate(
+        { body: {}, headers: {} } as never,
+        {
+          sub: 'user-id',
+          email: 'user@mail.com',
+          role: Roles.USER,
+        } as never,
+      ),
     ).toEqual({
       sub: 'user-id',
       email: 'user@mail.com',

@@ -89,8 +89,10 @@ describe('AuthService', () => {
     updateRefreshToken = jest.fn();
     findByName = jest.fn();
     assertSubcategory = jest.fn();
-    signAsync = jest.fn(async (_payload, options: { secret: string }) =>
-      options.secret === 'access' ? 'access-token' : 'refresh-token',
+    signAsync = jest.fn((_payload, options: { secret: string }) =>
+      Promise.resolve(
+        options.secret === 'access' ? 'access-token' : 'refresh-token',
+      ),
     );
     transaction = jest.fn();
     bcryptCompare.mockReset();
@@ -265,18 +267,20 @@ describe('AuthService', () => {
     const add = jest.fn().mockResolvedValue(undefined);
     const manager = {
       create: jest.fn((_entity: unknown, data: object) => ({ ...data })),
-      save: jest.fn(async (entity: { id?: string }) => ({
-        ...entity,
-        id: entity.id ?? 'user-1',
-      })),
+      save: jest.fn((entity: { id?: string }) =>
+        Promise.resolve({
+          ...entity,
+          id: entity.id ?? 'user-1',
+        }),
+      ),
       createQueryBuilder: jest.fn(() => ({
         relation: jest.fn().mockReturnThis(),
         of: jest.fn().mockReturnThis(),
         add,
       })),
     };
-    transaction.mockImplementation(async (cb: (mgr: typeof manager) => unknown) =>
-      cb(manager),
+    transaction.mockImplementation((cb: (mgr: typeof manager) => unknown) =>
+      Promise.resolve(cb(manager)),
     );
 
     const result = await service.register(registerDto);
@@ -310,20 +314,28 @@ describe('AuthService', () => {
     findByName.mockResolvedValue({ name: 'Санкт-Петербург' });
     assertSubcategory.mockResolvedValue({ id: 'sub-1' });
     findPublicById.mockResolvedValue(null);
-    transaction.mockImplementation(
-      async (cb: (mgr: { create: jest.Mock; save: jest.Mock; createQueryBuilder: jest.Mock }) => unknown) =>
+    type TxManager = {
+      create: jest.Mock;
+      save: jest.Mock;
+      createQueryBuilder: jest.Mock;
+    };
+    transaction.mockImplementation((cb: (mgr: TxManager) => unknown) =>
+      Promise.resolve(
         cb({
           create: jest.fn((_entity: unknown, data: object) => ({ ...data })),
-          save: jest.fn(async (entity: { id?: string }) => ({
-            ...entity,
-            id: entity.id ?? 'user-1',
-          })),
+          save: jest.fn((entity: { id?: string }) =>
+            Promise.resolve({
+              ...entity,
+              id: entity.id ?? 'user-1',
+            }),
+          ),
           createQueryBuilder: jest.fn(() => ({
             relation: jest.fn().mockReturnThis(),
             of: jest.fn().mockReturnThis(),
             add: jest.fn(),
           })),
         }),
+      ),
     );
 
     await expect(service.register(registerDto)).resolves.toMatchObject({

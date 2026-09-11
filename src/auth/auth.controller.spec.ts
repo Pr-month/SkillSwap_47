@@ -76,7 +76,10 @@ describe('AuthController', () => {
       role: Roles.USER,
       refreshToken: 'refresh-token',
     };
-    const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' };
+    const tokens = {
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    };
     refresh.mockResolvedValue(tokens);
 
     await expect(
