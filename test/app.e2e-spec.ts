@@ -1,3 +1,9 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Загружаем тестовый конфиг
+dotenv.config({ path: path.resolve(__dirname, '../.env.test.local'), override: true })
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
@@ -13,7 +19,7 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init();
+    await app.init(); 
   });
 
   it('/ (GET)', () => {
