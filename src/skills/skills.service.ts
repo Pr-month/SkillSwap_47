@@ -15,6 +15,8 @@ import { Skill } from './entities/skill.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const SIMILAR_USERS_LIMIT = 10;
+
 @Injectable()
 export class SkillsService {
   constructor(
@@ -78,6 +80,24 @@ export class SkillsService {
     }
 
     return skill;
+  }
+
+  async findSimilar(skillId: string): Promise<User[]> {
+    const skill = await this.findById(skillId);
+
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .innerJoin('user.skills', 'skill')
+      .leftJoinAndSelect('user.skills', 'userSkills')
+      .leftJoinAndSelect('userSkills.category', 'skillCategory')
+      .where('skill.categoryId = :categoryId', {
+        categoryId: skill.category.id,
+      })
+      .andWhere('user.id != :ownerId', { ownerId: skill.owner.id })
+      .distinct(true)
+      .orderBy('user.name', 'ASC')
+      .take(SIMILAR_USERS_LIMIT)
+      .getMany();
   }
 
   async addToFavorites(skillId: string, userId: string): Promise<Skill> {
