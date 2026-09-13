@@ -20,10 +20,18 @@ describe('SkillsService', () => {
   let remove: jest.Mock;
   let findUser: jest.Mock;
   let saveUser: jest.Mock;
+  let createQueryBuilder: jest.Mock;
   let assertSubcategory: jest.Mock;
-  let findCategoryById: jest.Mock;
-  const existsSync = fs.existsSync as jest.Mock;
-  const unlinkSync = fs.unlinkSync as jest.Mock;
+  let qb: {
+    innerJoin: jest.Mock;
+    leftJoinAndSelect: jest.Mock;
+    where: jest.Mock;
+    andWhere: jest.Mock;
+    distinct: jest.Mock;
+    orderBy: jest.Mock;
+    take: jest.Mock;
+    getMany: jest.Mock;
+  };
 
   beforeEach(async () => {
     create = jest.fn((payload: Partial<Skill>) => payload as Skill);
@@ -34,9 +42,24 @@ describe('SkillsService', () => {
     findUser = jest.fn();
     saveUser = jest.fn();
     assertSubcategory = jest.fn();
-    findCategoryById = jest.fn();
-    existsSync.mockReset();
-    unlinkSync.mockReset();
+    qb = {
+      innerJoin: jest.fn(),
+      leftJoinAndSelect: jest.fn(),
+      where: jest.fn(),
+      andWhere: jest.fn(),
+      distinct: jest.fn(),
+      orderBy: jest.fn(),
+      take: jest.fn(),
+      getMany: jest.fn(),
+    };
+    qb.innerJoin.mockReturnValue(qb);
+    qb.leftJoinAndSelect.mockReturnValue(qb);
+    qb.where.mockReturnValue(qb);
+    qb.andWhere.mockReturnValue(qb);
+    qb.distinct.mockReturnValue(qb);
+    qb.orderBy.mockReturnValue(qb);
+    qb.take.mockReturnValue(qb);
+    createQueryBuilder = jest.fn(() => qb);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -56,6 +79,7 @@ describe('SkillsService', () => {
           useValue: {
             findOne: findUser,
             save: saveUser,
+            createQueryBuilder,
           },
         },
         {
@@ -430,6 +454,46 @@ describe('SkillsService', () => {
         service.remove('skill-1', 'other-user'),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findSimilar', () => {
+    const skill = {
+      id: 'skill-1',
+      category: { id: 'category-leaf' },
+      owner: { id: 'owner-1' },
+    } as Skill;
+
+    it('throws 404 when the skill does not exist', async () => {
+      findSkill.mockResolvedValue(null);
+
+      await expect(service.findSimilar('missing-id')).rejects.toMatchObject({
+        status: 404,
+      });
+      expect(createQueryBuilder).not.toHaveBeenCalled();
+    });
+
+    it('returns up to 10 other users with skills in the same category', async () => {
+      const similarUsers = [{ id: 'user-2' }, { id: 'user-3' }] as User[];
+      findSkill.mockResolvedValue(skill);
+      qb.getMany.mockResolvedValue(similarUsers);
+
+      await expect(service.findSimilar('skill-1')).resolves.toEqual(
+        similarUsers,
+      );
+
+      expect(findSkill).toHaveBeenCalledWith({
+        where: { id: 'skill-1' },
+        relations: { owner: true, category: true },
+      });
+      expect(qb.where).toHaveBeenCalledWith('skill.categoryId = :categoryId', {
+        categoryId: 'category-leaf',
+      });
+      expect(qb.andWhere).toHaveBeenCalledWith('user.id != :ownerId', {
+        ownerId: 'owner-1',
+      });
+      expect(qb.take).toHaveBeenCalledWith(10);
+      expect(qb.orderBy).toHaveBeenCalledWith('user.name', 'ASC');
     });
   });
 });
