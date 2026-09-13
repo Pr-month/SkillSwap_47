@@ -1,7 +1,4 @@
-import {
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import * as fs from 'fs';
@@ -10,6 +7,11 @@ import { Category } from '../categories/entities/category.entity';
 import { User } from '../users/entities/user.entity';
 import { Skill } from './entities/skill.entity';
 import { SkillsService } from './skills.service';
+
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  unlinkSync: jest.fn(),
+}));
 
 describe('SkillsService', () => {
   let service: SkillsService;
@@ -22,6 +24,9 @@ describe('SkillsService', () => {
   let saveUser: jest.Mock;
   let createQueryBuilder: jest.Mock;
   let assertSubcategory: jest.Mock;
+  let findCategoryById: jest.Mock;
+  const existsSync = fs.existsSync as jest.Mock;
+  const unlinkSync = fs.unlinkSync as jest.Mock;
   let qb: {
     innerJoin: jest.Mock;
     leftJoinAndSelect: jest.Mock;
@@ -42,6 +47,9 @@ describe('SkillsService', () => {
     findUser = jest.fn();
     saveUser = jest.fn();
     assertSubcategory = jest.fn();
+    findCategoryById = jest.fn();
+    existsSync.mockReset();
+    unlinkSync.mockReset();
     qb = {
       innerJoin: jest.fn(),
       leftJoinAndSelect: jest.fn(),
@@ -193,9 +201,9 @@ describe('SkillsService', () => {
     it('throws NotFoundException when page is out of range', async () => {
       findAndCount.mockResolvedValue([[], 5]);
 
-      await expect(service.findAll({ page: 3, limit: 5 })).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        service.findAll({ page: 3, limit: 5 }),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
@@ -395,7 +403,9 @@ describe('SkillsService', () => {
       findSkill.mockResolvedValue(skill);
       remove.mockResolvedValue(skill);
 
-      await expect(service.remove('skill-1', 'user-1')).resolves.toBeUndefined();
+      await expect(
+        service.remove('skill-1', 'user-1'),
+      ).resolves.toBeUndefined();
       expect(remove).toHaveBeenCalledWith(skill);
       expect(unlinkSync).not.toHaveBeenCalled();
     });
@@ -410,7 +420,9 @@ describe('SkillsService', () => {
       remove.mockResolvedValue(skill);
       existsSync.mockReturnValue(true);
 
-      await expect(service.remove('skill-1', 'user-1')).resolves.toBeUndefined();
+      await expect(
+        service.remove('skill-1', 'user-1'),
+      ).resolves.toBeUndefined();
       expect(existsSync).toHaveBeenCalled();
       expect(unlinkSync).toHaveBeenCalled();
       expect(remove).toHaveBeenCalledWith(skill);
@@ -430,7 +442,9 @@ describe('SkillsService', () => {
       });
       const errorSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await expect(service.remove('skill-1', 'user-1')).resolves.toBeUndefined();
+      await expect(
+        service.remove('skill-1', 'user-1'),
+      ).resolves.toBeUndefined();
       expect(remove).toHaveBeenCalledWith(skill);
       errorSpy.mockRestore();
     });
