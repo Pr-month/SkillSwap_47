@@ -48,6 +48,11 @@ export class SkillsController {
     return this.skillsService.findAll(query);
   }
 
+  @Get(':id/similar')
+  findSimilar(@Param('id', ParseUUIDPipe) id: string) {
+    return this.skillsService.findSimilar(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.skillsService.findOne(id);
