@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtPayload } from '@supabase/supabase-js';
 import { RequestStatus } from 'src/common/enums/request-status.enum';
 import { Roles } from 'src/common/enums/user-role.enum';
+import { NotificationsGateway } from 'src/notification/notifications.gateway';
 import { SkillsService } from 'src/skills/skills.service';
 import { Repository } from 'typeorm';
 import { CreateRequestDto } from './dto/create-request.dto';
@@ -21,6 +22,7 @@ export class RequestsService {
     @InjectRepository(SkillRequest)
     private readonly requestsRepository: Repository<SkillRequest>,
     private readonly skillsService: SkillsService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   async create(senderId: string, dto: CreateRequestDto) {
@@ -69,7 +71,7 @@ export class RequestsService {
 
     const saved = await this.requestsRepository.save(request);
 
-    return this.requestsRepository.findOne({
+    const created = await this.requestsRepository.findOne({
       where: { id: saved.id },
       relations: {
         sender: true,
@@ -78,6 +80,16 @@ export class RequestsService {
         requestedSkill: { category: true },
       },
     });
+
+    if (created) {
+      this.notificationsGateway.notifyUser(created.receiver.id, {
+        type: 'new',
+        skillName: created.requestedSkill.title,
+        fromUser: created.sender.name,
+      });
+    }
+
+    return created;
   }
 
   findAll() {
@@ -134,7 +146,20 @@ export class RequestsService {
     request.status = dto.status;
     request.isRead = true;
 
-    return this.requestsRepository.save(request);
+    const saved = await this.requestsRepository.save(request);
+
+    if (
+      saved.status === RequestStatus.ACCEPTED ||
+      saved.status === RequestStatus.REJECTED
+    ) {
+      this.notificationsGateway.notifyUser(saved.sender.id, {
+        type: saved.status === RequestStatus.ACCEPTED ? 'accepted' : 'rejected',
+        skillName: saved.requestedSkill.title,
+        fromUser: saved.receiver.name,
+      });
+    }
+
+    return saved;
   }
 
   async remove(requestId: string, user: JwtPayload) {
