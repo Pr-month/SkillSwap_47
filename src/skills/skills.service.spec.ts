@@ -49,8 +49,8 @@ describe('SkillsService', () => {
     saveUser = jest.fn();
     assertSubcategory = jest.fn();
     findCategoryById = jest.fn();
-    existsSyncMock.mockReset();
-    unlinkSyncMock.mockReset();
+    existsSync.mockReset();
+    unlinkSync.mockReset();
     qb = {
       innerJoin: jest.fn(),
       leftJoinAndSelect: jest.fn(),
@@ -424,8 +424,8 @@ describe('SkillsService', () => {
       await expect(
         service.remove('skill-1', 'user-1'),
       ).resolves.toBeUndefined();
-      expect(existsSyncMock).toHaveBeenCalled();
-      expect(unlinkSyncMock).toHaveBeenCalled();
+      expect(existsSync).toHaveBeenCalled();
+      expect(unlinkSync).toHaveBeenCalled();
       expect(remove).toHaveBeenCalledWith(skill);
     });
 

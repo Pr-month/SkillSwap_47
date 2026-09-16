@@ -8,6 +8,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RequestStatus } from '../common/enums/request-status.enum';
 import { Roles } from '../common/enums/user-role.enum';
+import { NotificationsGateway } from '../notification/notifications.gateway';
 import { SkillsService } from '../skills/skills.service';
 import { SkillRequest } from './entities/request.entity';
 import { RequestsService } from './requests.service';
@@ -20,6 +21,7 @@ describe('RequestsService', () => {
   let create: jest.Mock;
   let save: jest.Mock;
   let remove: jest.Mock;
+  let notifyUser: jest.Mock;
 
   beforeEach(async () => {
     findById = jest.fn();
@@ -30,6 +32,7 @@ describe('RequestsService', () => {
     );
     save = jest.fn();
     remove = jest.fn();
+    notifyUser = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -41,6 +44,10 @@ describe('RequestsService', () => {
         {
           provide: SkillsService,
           useValue: { findById },
+        },
+        {
+          provide: NotificationsGateway,
+          useValue: { notifyUser },
         },
       ],
     }).compile();
@@ -63,11 +70,17 @@ describe('RequestsService', () => {
         owner: { id: 'receiver-1' },
       };
       const saved = { id: 'request-1' };
+      const created = {
+        id: 'request-1',
+        sender: { id: 'sender-1', name: 'Анна' },
+        receiver: { id: 'receiver-1' },
+        requestedSkill: { title: 'Гитара' },
+      };
 
       findById
         .mockResolvedValueOnce(offeredSkill)
         .mockResolvedValueOnce(requestedSkill);
-      findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(saved);
+      findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(created);
       save.mockResolvedValue(saved);
 
       const result = await service.create('sender-1', {
@@ -83,7 +96,12 @@ describe('RequestsService', () => {
           isRead: false,
         }),
       );
-      expect(result).toEqual(saved);
+      expect(notifyUser).toHaveBeenCalledWith('receiver-1', {
+        type: 'new',
+        skillName: 'Гитара',
+        fromUser: 'Анна',
+      });
+      expect(result).toEqual(created);
     });
 
     it('rejects when offered and requested skills are the same', async () => {
@@ -94,6 +112,7 @@ describe('RequestsService', () => {
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(findById).not.toHaveBeenCalled();
+      expect(notifyUser).not.toHaveBeenCalled();
     });
 
     it('rejects offering a skill that belongs to another user', async () => {
@@ -110,6 +129,7 @@ describe('RequestsService', () => {
           requestedSkillId: 'requested-1',
         }),
       ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(notifyUser).not.toHaveBeenCalled();
     });
 
     it('rejects requesting own skill', async () => {
@@ -126,6 +146,7 @@ describe('RequestsService', () => {
           requestedSkillId: 'requested-1',
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
+      expect(notifyUser).not.toHaveBeenCalled();
     });
 
     it('rejects when a pending request already exists', async () => {
@@ -144,6 +165,7 @@ describe('RequestsService', () => {
         }),
       ).rejects.toBeInstanceOf(ConflictException);
       expect(save).not.toHaveBeenCalled();
+      expect(notifyUser).not.toHaveBeenCalled();
     });
   });
 
@@ -155,8 +177,9 @@ describe('RequestsService', () => {
           id: 'req-1',
           status: RequestStatus.PENDING,
           isRead: false,
-          receiver: { id: 'receiver-1' },
-          sender: { id: 'sender-1' },
+          receiver: { id: 'receiver-1', name: 'Иван' },
+          sender: { id: 'sender-1', name: 'Анна' },
+          requestedSkill: { title: 'Гитара' },
         };
         findOne.mockResolvedValue(request);
         save.mockImplementation((entity: SkillRequest) => entity);
@@ -171,6 +194,19 @@ describe('RequestsService', () => {
         );
         expect(result.status).toBe(status);
         expect(result.isRead).toBe(true);
+
+        if (
+          status === RequestStatus.ACCEPTED ||
+          status === RequestStatus.REJECTED
+        ) {
+          expect(notifyUser).toHaveBeenCalledWith('sender-1', {
+            type: status === RequestStatus.ACCEPTED ? 'accepted' : 'rejected',
+            skillName: 'Гитара',
+            fromUser: 'Иван',
+          });
+        } else {
+          expect(notifyUser).not.toHaveBeenCalled();
+        }
       },
     );
 
@@ -182,6 +218,7 @@ describe('RequestsService', () => {
           status: RequestStatus.ACCEPTED,
         }),
       ).rejects.toBeInstanceOf(NotFoundException);
+      expect(notifyUser).not.toHaveBeenCalled();
     });
 
     it('rejects when user is not the receiver', async () => {
@@ -198,6 +235,7 @@ describe('RequestsService', () => {
         }),
       ).rejects.toBeInstanceOf(ForbiddenException);
       expect(save).not.toHaveBeenCalled();
+      expect(notifyUser).not.toHaveBeenCalled();
     });
   });
 
