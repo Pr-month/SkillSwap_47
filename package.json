@@ -13,15 +13,17 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
+    "test": "jest --config jest.config.ts",
+    "test:watch": "jest --config jest.config.ts --watch",
+    "test:cov": "jest --config jest.config.ts --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "npm run seed:categories && jest --config ./test/jest-e2e.json",
+    "test:e2e": "ts-node -r tsconfig-paths/register test/run-e2e.ts",
     "seed:categories": "ts-node -r tsconfig-paths/register src/scripts/seed-categories.ts",
     "seed:cities": "ts-node -r tsconfig-paths/register src/scripts/seed-cities.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/scripts/seed-admin.ts",
-    "seed:users": "ts-node -r tsconfig-paths/register src/scripts/seed-users.ts"
+    "seed:users": "ts-node -r tsconfig-paths/register src/scripts/seed-users.ts",
+    "clear-db": "ts-node -r tsconfig-paths/register src/scripts/clear-db.ts",
+    "seed:skills": "ts-node -r tsconfig-paths/register src/scripts/seed-skills.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -31,7 +33,10 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.2.3",
+    "@nestjs/swagger": "^11.4.7",
     "@nestjs/typeorm": "^11.0.3",
+    "@nestjs/websockets": "^11.2.3",
     "@supabase/supabase-js": "^2.112.3",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
@@ -60,6 +65,7 @@
     "@types/node": "^22.10.7",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -74,25 +80,5 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "../coverage",
-    "testEnvironment": "node",
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
-    }
   }
 }
