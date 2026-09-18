@@ -81,7 +81,7 @@ describe('Сервис городов', () => {
 
     expect(create).toHaveBeenCalled();
     expect(save).toHaveBeenCalledTimes(1);
-    expect(save.mock.calls[0][0]).toEqual(
+    expect(save).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ name: 'Москва' })]),
     );
   });
