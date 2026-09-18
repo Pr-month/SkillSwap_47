@@ -4,6 +4,10 @@ on:
   pull_request:
     branches: ['**']
 
+defaults:
+  run:
+    working-directory: backend
+
 jobs:
   lint:
     name: Run Linter
