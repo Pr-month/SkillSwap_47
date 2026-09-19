@@ -2,6 +2,11 @@
 /dist
 /node_modules
 /build
+/coverage
+/backend/dist
+/backend/node_modules
+/backend/build
+/backend/coverage
 
 # Logs
 logs
@@ -16,7 +21,6 @@ lerna-debug.log*
 .DS_Store
 
 # Tests
-/coverage
 /.nyc_output
 
 # IDEs and editors
@@ -56,7 +60,7 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Uploaded files
-/public
+/backend/public
 
 
 .supabase/
