@@ -53,6 +53,8 @@ export function ApiFindSkill() {
     ApiOperation({ summary: 'Получить навык по ID' }),
     ApiParam({ name: 'id', description: 'ID навыка' }),
     ApiOkResponse({ description: 'Навык найден' }),
+    ApiResponse({ status: 400, description: 'Невалидный UUID' }),
+    ApiResponse({ status: 404, description: 'Навык не найден' }),
   );
 }
 
