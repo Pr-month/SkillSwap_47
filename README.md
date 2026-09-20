@@ -11,6 +11,18 @@ npm run start:dev
 
 Новые ветки создавай от `dev`, PR — в `dev`.
 
+## Миграции
+
+Схема БД создаётся только миграциями (`synchronize` выключен). Перед стартом API и сидами:
+
+```bash
+cd backend
+NODE_ENV=test npm run migration:run
+```
+
+Для локального Postgres / Docker DB нужен `NODE_ENV=test` (иначе TypeORM включает SSL).  
+`migration:generate` / `migration:revert` — те же скрипты в `backend/package.json`.
+
 ## Документация
 [Техническое задание](https://docs.google.com/document/d/1d4o9Sb9o6lxXuqdEgKe4eRlH2s7gKrh0icJ3gyv2FD4/edit?tab=t.0#heading=h.ynonjn54b672) <br>
 [Макет](https://www.figma.com/design/bKwOakHJI7Z2mh2zVCBphP/SkillSwap---Для-разработчиков?node-id=0-1&p=f&t=HH7S4bYwVVtxLM6z-0)
