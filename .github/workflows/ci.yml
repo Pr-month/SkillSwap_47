@@ -63,8 +63,21 @@ jobs:
           --health-retries=5
 
     env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
       NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_ACCESS_SECRET: test_access_secret
+      JWT_REFRESH_SECRET: test_refresh_secret
+      JWT_ACCESS_EXPIRES_IN: 1h
+      JWT_REFRESH_EXPIRES_IN: 7d
+      ADMIN_EMAIL: admin@skillswap.local
+      ADMIN_PASSWORD: Admin123!
+      YANDEX_CLIENT_ID: test_yandex_client_id
+      YANDEX_CLIENT_SECRET: test_yandex_client_secret
+      YANDEX_CALLBACK_URL: http://localhost:3000/auth/yandex/callback
 
     steps:
       - name: Checkout code

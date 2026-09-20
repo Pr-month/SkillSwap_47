@@ -49,8 +49,8 @@ describe('SkillsService', () => {
     saveUser = jest.fn();
     assertSubcategory = jest.fn();
     findCategoryById = jest.fn();
-    existsSync.mockReset();
-    unlinkSync.mockReset();
+    existsSyncMock.mockReset();
+    unlinkSyncMock.mockReset();
     qb = {
       innerJoin: jest.fn(),
       leftJoinAndSelect: jest.fn(),
