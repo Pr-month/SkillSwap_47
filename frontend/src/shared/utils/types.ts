@@ -42,7 +42,7 @@ export type TSkill = {
 }
 
 export type TCategory = {
-  id: string             // UUID 
+  id: string // UUID
   name: string
   children?: TCategory[]
 }

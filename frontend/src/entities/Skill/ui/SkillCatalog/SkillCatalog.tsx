@@ -32,7 +32,7 @@ export const SkillCatalog = () => {
               {categoryIcon && <img src={categoryIcon} alt="" aria-hidden="true" />}
               <h2 className={styles.blockTitle}>{category.name}</h2>
             </div>
-            
+
             <ul className={styles.blockList}>
               {categorySubcategories.map((subcategory) => (
                 <li key={subcategory.id} className={styles.blockItem}>
