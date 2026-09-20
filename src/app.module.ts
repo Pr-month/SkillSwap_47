@@ -9,6 +9,7 @@ import { CitiesModule } from './cities/cities.module';
 import { appConfig } from './config/app.config';
 import { databaseConfig, type IDatabaseConfig } from './config/db.config';
 import { jwtConfig } from './config/jwt.config';
+import { yandexConfig } from './config/yandex.config';
 import { GendersModule } from './genders/genders.module';
 import { SkillsModule } from './skills/skills.module';
 import { UsersModule } from './users/users.module';
@@ -20,7 +21,7 @@ import { RequestsModule } from './requests/requests.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, appConfig, jwtConfig],
+      load: [databaseConfig, appConfig, jwtConfig, yandexConfig],
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
