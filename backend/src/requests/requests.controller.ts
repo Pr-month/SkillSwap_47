@@ -19,13 +19,25 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CreateRequestDto } from './dto/create-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestsService } from './requests.service';
+import {
+  ApiCreateRequest,
+  ApiFindIncomingRequests,
+  ApiFindOutgoingRequests,
+  ApiFindRequest,
+  ApiFindRequests,
+  ApiRemoveRequest,
+  ApiRequestsTag,
+  ApiUpdateRequest,
+} from './requests.swagger';
 
+@ApiRequestsTag()
 @Controller('requests')
 export class RequestsController {
   constructor(private readonly requestsService: RequestsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiCreateRequest()
   create(
     @CurrentUser('sub') senderId: string,
     @Body() createRequestDto: CreateRequestDto,
@@ -34,29 +46,34 @@ export class RequestsController {
   }
 
   @Get()
+  @ApiFindRequests()
   findAll() {
     return this.requestsService.findAll();
   }
 
   @Get('incoming')
   @UseGuards(JwtAuthGuard)
+  @ApiFindIncomingRequests()
   findIncoming(@CurrentUser('sub') userId: string) {
     return this.requestsService.findIncoming(userId);
   }
 
   @Get('outgoing')
   @UseGuards(JwtAuthGuard)
+  @ApiFindOutgoingRequests()
   findOutgoing(@CurrentUser('sub') userId: string) {
     return this.requestsService.findOutgoing(userId);
   }
 
   @Get(':id')
+  @ApiFindRequest()
   findOne(@Param('id') id: string) {
     return this.requestsService.findOne(+id);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiUpdateRequest()
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser('sub') userId: string,
@@ -65,9 +82,10 @@ export class RequestsController {
     return this.requestsService.update(id, userId, updateRequestDto);
   }
 
-  @HttpCode(HttpStatus.OK)
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiRemoveRequest()
   async deleteRequest(@Param('id') requestId: string, @Req() req: AuthRequest) {
     return this.requestsService.remove(requestId, req.user as JwtPayload);
   }
