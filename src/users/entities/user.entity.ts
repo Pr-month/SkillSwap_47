@@ -24,23 +24,29 @@ export class User {
   email!: string;
 
   @Exclude()
-  @Column({ type: 'varchar', length: 255 })
-  password!: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  password!: string | null;
 
   @Column({ type: 'text', nullable: true })
   about!: string | null;
 
-  @Column({ type: 'date' })
-  birthdate!: string;
+  @Column({ type: 'date', nullable: true })
+  birthdate!: string | null;
 
-  @Column({ type: 'varchar', length: 64 })
-  city!: string;
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  city!: string | null;
 
-  @Column({ type: 'enum', enum: UserGender })
-  gender!: UserGender;
+  @Column({ type: 'enum', enum: UserGender, nullable: true })
+  gender!: UserGender | null;
 
   @Column({ type: 'varchar', length: 255, default: '' })
   avatar!: string;
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  provider!: string | null;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  providerId!: string | null;
 
   @Column({
     type: 'enum',
