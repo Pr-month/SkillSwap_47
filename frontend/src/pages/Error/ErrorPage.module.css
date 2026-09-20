@@ -1,0 +1,48 @@
+.container {
+  font-family: Roboto, sans-serif;
+  font-weight: 400;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f6f7f5;
+}
+
+.content {
+  text-align: center;
+}
+
+.image {
+  max-width: 100%;
+  margin: 0 auto 40px;
+  display: block;
+}
+
+.title {
+  font-family: Jost, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 28px;
+  color: #253017;
+  margin-bottom: 4px;
+}
+
+.description {
+  font-size: 16px;
+  line-height: 24px;
+  color: #253017;
+  margin-bottom: 28px;
+  word-spacing: 3px;
+  max-width: 460px;
+}
+
+.actions {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.button {
+  min-width: 218px;
+}

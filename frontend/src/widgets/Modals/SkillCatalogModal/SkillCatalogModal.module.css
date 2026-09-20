@@ -1,0 +1,31 @@
+.catalogDropdownOverlay {
+  display: block !important; /* Отключаем центрирование flex */
+  pointer-events: auto; /* Оверлей всё еще ловит клики для закрытия */
+  overflow-y: scroll;
+}
+
+.catalogWrapper {
+  position: absolute;
+  top: 94px;
+  left: 36px;
+  background: #fff;
+  box-shadow: 0 4px 40px rgb(0 0 0 / 10%);
+  border-radius: 20px;
+  padding: 40px;
+  width: fit-content;
+  min-width: 800px; /* Чтобы две колонки влезли как на фото */
+  z-index: 1001;
+}
+
+.resetModal {
+  /* Убираем всё лишнее с базового div.modal */
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+
+  /* Позиционируем его в нужное место */
+  position: absolute !important;
+  top: 80px;
+  right: 50px;
+}

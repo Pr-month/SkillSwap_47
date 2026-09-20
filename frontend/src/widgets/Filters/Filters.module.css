@@ -1,0 +1,246 @@
+.root {
+  width: 324px;
+  min-height: 1012px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.heading {
+  margin: 0;
+  font-family: Jost, Roboto, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 32px;
+  color: #253017;
+}
+
+/* Как filterChip в UserList: подпись + крестик, без фона; акцент зелёный */
+.resetChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 8px 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font-family: Roboto, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #508826;
+  cursor: pointer;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.resetChip:disabled {
+  color: #9ca197;
+  cursor: not-allowed;
+}
+
+.resetChip:hover:not(:disabled) {
+  color: #3d6b1d;
+}
+
+.resetChipLabel {
+  min-width: 0;
+}
+
+.resetChipIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.resetChipIcon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.resetChip path {
+  fill: currentcolor;
+}
+
+.group {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.firstGroup {
+  margin-top: 40px;
+}
+
+.skillsGroup {
+  margin-top: 32px;
+}
+
+.genderGroup {
+  margin-top: 32px;
+}
+
+.cityGroup {
+  margin-top: 32px;
+}
+
+.title {
+  margin-bottom: 14px;
+  font-family: Jost, Roboto, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 28px;
+  color: #253017;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.listItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.categoryRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  column-gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.expandButton {
+  border: none;
+  background: none;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  justify-self: end;
+}
+
+.categoryRow > label {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.expandIcon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #253017;
+}
+
+.expandIcon svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.expandIconHidden {
+  opacity: 0;
+}
+
+.sublist {
+  margin: 0;
+  padding: 0 0 0 24px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.sublistItem {
+  display: block;
+}
+
+.toggleButton {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: Roboto, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #508826;
+  text-align: left;
+}
+
+.toggleIcon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #253017;
+}
+
+.toggleIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (width <= 1024px) {
+  .root {
+    width: 100%;
+  }
+}

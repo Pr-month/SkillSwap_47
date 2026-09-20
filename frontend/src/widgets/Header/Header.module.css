@@ -1,0 +1,227 @@
+.header {
+  background-color: inherit;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: auto minmax(280px, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 32px;
+  min-height: 104px;
+}
+
+.headerAuth {
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+}
+
+.leftSide {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+}
+
+.navigationList {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+}
+
+.navButton,
+.catalogButton {
+  padding: 12px 16px;
+  font-family: Roboto, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #253017;
+  background-color: inherit;
+}
+
+.catalogButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.catalogIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.catalogIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.searchWrapper {
+  width: 100%;
+  max-width: 704px;
+}
+
+.rightSide {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.actionIcon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.authActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.authButton {
+  min-width: 122px;
+  min-height: 48px;
+  font-family: Roboto, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.profileBlock {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 4px 8px;
+  cursor: pointer;
+}
+
+.profileActionsContainer {
+  display: flex;
+  flex-direction: column;
+  min-width: 260px;
+  gap: 24px;
+  position: absolute;
+  top: 70px;
+  right: 45px;
+  background-color: #fff;
+  box-shadow: 3px 3px 5px #706b6b;
+  border: 1px solid rgb(178 185 169);
+  border-radius: 12px;
+  padding: 40px;
+  z-index: 999;
+  cursor: default;
+}
+
+.profileAction {
+  font-family: Roboto, sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.profileActionButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: none;
+}
+
+.userName {
+  font-family: Roboto, Arial, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  color: #253017;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.notificationsIndicator {
+  position: absolute;
+  right: 202px;
+  top: 36px;
+  z-index: 10;
+  width: 12px;
+  height: 12px;
+  background-color: rgb(224 121 110);
+  border-radius: 50%;
+}
+
+.btn {
+  max-width: 147px;
+}
+
+.img {
+  width: 10px;
+  height: 10px;
+  margin: 6.7px;
+}
+
+@media (width <= 1200px) {
+  .container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .leftSide,
+  .rightSide {
+    justify-content: space-between;
+  }
+
+  .searchWrapper {
+    max-width: none;
+  }
+}
+
+@media (width <= 767px) {
+  .container {
+    padding: 16px;
+  }
+
+  .leftSide {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .navigationList,
+  .authActions,
+  .rightSide {
+    flex-wrap: wrap;
+  }
+
+  .navButton,
+  .catalogButton,
+  .authButton,
+  .userName {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .authButton {
+    min-height: 48px;
+    min-width: 0;
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+  }
+}

@@ -1,0 +1,214 @@
+{
+  "subcategoryList": [
+    {
+      "id": 1,
+      "title": "Управление командой",
+      "categoryId": 1
+    },
+    {
+      "id": 2,
+      "title": "Маркетинг и реклама",
+      "categoryId": 1
+    },
+    {
+      "id": 3,
+      "title": "Продажи и переговоры",
+      "categoryId": 1
+    },
+    {
+      "id": 4,
+      "title": "Личный бренд",
+      "categoryId": 1
+    },
+    {
+      "id": 5,
+      "title": "Резюме и собеседование",
+      "categoryId": 1
+    },
+    {
+      "id": 6,
+      "title": "Тайм-менеджмент",
+      "categoryId": 1
+    },
+    {
+      "id": 7,
+      "title": "Проектное управление",
+      "categoryId": 1
+    },
+    {
+      "id": 8,
+      "title": "Предпринимательство",
+      "categoryId": 1
+    },
+    {
+      "id": 9,
+      "title": "Рисование и иллюстрация",
+      "categoryId": 2
+    },
+    {
+      "id": 10,
+      "title": "Фотография",
+      "categoryId": 2
+    },
+    {
+      "id": 11,
+      "title": "Видеомонтаж",
+      "categoryId": 2
+    },
+    {
+      "id": 12,
+      "title": "Музыка и звук",
+      "categoryId": 2
+    },
+    {
+      "id": 13,
+      "title": "Актёрское мастерство",
+      "categoryId": 2
+    },
+    {
+      "id": 14,
+      "title": "Креативное письмо",
+      "categoryId": 2
+    },
+    {
+      "id": 15,
+      "title": "Арт-терапия",
+      "categoryId": 2
+    },
+    {
+      "id": 16,
+      "title": "Декор и DIY",
+      "categoryId": 2
+    },
+    {
+      "id": 17,
+      "title": "Английский",
+      "categoryId": 3
+    },
+    {
+      "id": 18,
+      "title": "Французский",
+      "categoryId": 3
+    },
+    {
+      "id": 19,
+      "title": "Испанский",
+      "categoryId": 3
+    },
+    {
+      "id": 20,
+      "title": "Немецкий",
+      "categoryId": 3
+    },
+    {
+      "id": 21,
+      "title": "Китайский",
+      "categoryId": 3
+    },
+    {
+      "id": 22,
+      "title": "Японский",
+      "categoryId": 3
+    },
+    {
+      "id": 23,
+      "title": "Подготовка к экзаменам (IELTS, TOEFL)",
+      "categoryId": 3
+    },
+    {
+      "id": 24,
+      "title": "Личностное развитие",
+      "categoryId": 4
+    },
+    {
+      "id": 25,
+      "title": "Навыки обучения",
+      "categoryId": 4
+    },
+    {
+      "id": 26,
+      "title": "Когнитивные техники",
+      "categoryId": 4
+    },
+    {
+      "id": 27,
+      "title": "Скорочтение",
+      "categoryId": 4
+    },
+    {
+      "id": 28,
+      "title": "Навыки преподавания",
+      "categoryId": 4
+    },
+    {
+      "id": 29,
+      "title": "Коучинг",
+      "categoryId": 4
+    },
+    {
+      "id": 30,
+      "title": "Уборка и организация",
+      "categoryId": 5
+    },
+    {
+      "id": 31,
+      "title": "Домашние финансы",
+      "categoryId": 5
+    },
+    {
+      "id": 32,
+      "title": "Приготовление еды",
+      "categoryId": 5
+    },
+    {
+      "id": 33,
+      "title": "Домашние растения",
+      "categoryId": 5
+    },
+    {
+      "id": 34,
+      "title": "Ремонт",
+      "categoryId": 5
+    },
+    {
+      "id": 35,
+      "title": "Хранение вещей",
+      "categoryId": 5
+    },
+    {
+      "id": 36,
+      "title": "Йога и медитация",
+      "categoryId": 6
+    },
+    {
+      "id": 37,
+      "title": "Питание и ЗОЖ",
+      "categoryId": 6
+    },
+    {
+      "id": 38,
+      "title": "Ментальное здоровье",
+      "categoryId": 6
+    },
+    {
+      "id": 39,
+      "title": "Осознанность",
+      "categoryId": 6
+    },
+    {
+      "id": 40,
+      "title": "Физические тренировки",
+      "categoryId": 6
+    },
+    {
+      "id": 41,
+      "title": "Сон и восстановление",
+      "categoryId": 6
+    },
+    {
+      "id": 42,
+      "title": "Баланс жизни и работы",
+      "categoryId": 6
+    }
+  ]
+}
