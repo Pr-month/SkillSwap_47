@@ -29,6 +29,8 @@ describe('AuthService', () => {
   let service: AuthService;
   let findOne: jest.Mock;
   let update: jest.Mock;
+  let create: jest.Mock;
+  let save: jest.Mock;
   let findByEmail: jest.Mock;
   let findPublicById: jest.Mock;
   let updateRefreshToken: jest.Mock;
@@ -84,6 +86,9 @@ describe('AuthService', () => {
   beforeEach(async () => {
     findOne = jest.fn();
     update = jest.fn();
+    create = jest.fn();
+    create.mockImplementation((entity: Partial<User>) => entity);
+    save = jest.fn();
     findByEmail = jest.fn();
     findPublicById = jest.fn();
     updateRefreshToken = jest.fn();
@@ -111,7 +116,7 @@ describe('AuthService', () => {
         { provide: DataSource, useValue: { transaction } },
         {
           provide: getRepositoryToken(User),
-          useValue: { findOne, update },
+          useValue: { findOne, update, create, save },
         },
         { provide: JwtService, useValue: { signAsync } },
         { provide: appConfig.KEY, useValue: { saltRounds: 10 } },
@@ -386,5 +391,63 @@ describe('AuthService', () => {
     transaction.mockRejectedValue(new Error('db down'));
 
     await expect(service.register(registerDto)).rejects.toThrow('db down');
+  });
+
+  it('validateYandexUser returns existing user by email', async () => {
+    findByEmail.mockResolvedValue(storedUser);
+
+    await expect(
+      service.validateYandexUser({
+        email: 'Alex@Mail.com',
+        name: 'Алексей',
+        avatar: 'https://avatar.example/1.png',
+      }),
+    ).resolves.toEqual(storedUser);
+
+    expect(findByEmail).toHaveBeenCalledWith('alex@mail.com');
+    expect(create).not.toHaveBeenCalled();
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('validateYandexUser creates user when email is new', async () => {
+    const createdUser = {
+      id: 'user-yandex',
+      email: 'yandex@mail.com',
+      name: 'Яндекс',
+      password: 'hashed-value',
+      about: null,
+      birthdate: '2000-01-01',
+      city: 'Не указан',
+      gender: UserGender.MALE,
+      avatar: 'https://avatar.example/y.png',
+      role: Roles.USER,
+      refreshToken: null,
+    };
+    findByEmail.mockResolvedValue(null);
+    save.mockResolvedValue(createdUser);
+
+    await expect(
+      service.validateYandexUser({
+        email: 'Yandex@Mail.com',
+        name: 'Яндекс',
+        avatar: 'https://avatar.example/y.png',
+      }),
+    ).resolves.toEqual(createdUser);
+
+    expect(findByEmail).toHaveBeenCalledWith('yandex@mail.com');
+    expect(bcryptHash).toHaveBeenCalled();
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'yandex@mail.com',
+        name: 'Яндекс',
+        birthdate: '2000-01-01',
+        city: 'Не указан',
+        gender: UserGender.MALE,
+        avatar: 'https://avatar.example/y.png',
+        role: Roles.USER,
+        password: 'hashed-value',
+      }),
+    );
+    expect(save).toHaveBeenCalled();
   });
 });

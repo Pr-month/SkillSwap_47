@@ -8,19 +8,22 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import type { StringValue } from 'ms';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
-import { appConfig, IConfig } from '../config/app.config';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
+import { UserGender } from '../common/enums/user-gender.enum';
+import { Roles } from '../common/enums/user-role.enum';
+import { appConfig, IConfig } from '../config/app.config';
 import { IJwtConfig, jwtConfig } from '../config/jwt.config';
 import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
-import { Roles } from '../common/enums/user-role.enum';
 import { UsersService } from '../users/users.service';
 import { RefreshAuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ValidateYandexUserDto } from './dto/validate-yandex-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -126,6 +129,48 @@ export class AuthService {
 
     return { message: 'Успешный выход' };
   }
+
+  async validateYandexUser(dto: ValidateYandexUserDto): Promise<User> {
+    const email = dto.email.toLowerCase();
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const passwordHash = await bcrypt.hash(
+      randomBytes(32).toString('hex'),
+      this.appCfg.saltRounds,
+    );
+
+    const user = this.usersRepository.create({
+      name: dto.name.slice(0, 32),
+      email,
+      password: passwordHash,
+      about: null,
+      birthdate: '2000-01-01',
+      city: 'Не указан',
+      gender: UserGender.MALE,
+      avatar: dto.avatar ?? '',
+      role: Roles.USER,
+      refreshToken: null,
+    });
+
+    return this.usersRepository.save(user);
+  }
+
+  async completeOAuthLogin(user: User) {
+    const tokens = await this.issueTokens(user.id, user.email, user.role);
+    const refreshTokenHash = await bcrypt.hash(
+      tokens.refreshToken,
+      this.appCfg.saltRounds,
+    );
+    await this.usersRepository.update(user.id, {
+      refreshToken: refreshTokenHash,
+    });
+
+    return tokens;
+  }
+
   async register(dto: RegisterDto) {
     const email = dto.email.toLowerCase();
     const existingUser = await this.usersService.findByEmail(email);
