@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserGender } from '../common/enums/user-gender.enum';
 import { Roles } from '../common/enums/user-role.enum';
+import { yandexOAuthConfig } from '../config/yandex-oauth.config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RefreshAuthUser } from './auth.types';
@@ -13,19 +14,30 @@ describe('AuthController', () => {
   let login: jest.Mock;
   let refresh: jest.Mock;
   let logout: jest.Mock;
+  let completeOAuthLogin: jest.Mock;
 
   beforeEach(async () => {
     register = jest.fn();
     login = jest.fn();
     refresh = jest.fn();
     logout = jest.fn();
+    completeOAuthLogin = jest.fn();
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
       providers: [
         {
           provide: AuthService,
-          useValue: { register, login, refresh, logout },
+          useValue: { register, login, refresh, logout, completeOAuthLogin },
+        },
+        {
+          provide: yandexOAuthConfig.KEY,
+          useValue: {
+            clientID: 'test-client',
+            clientSecret: 'test-secret',
+            callbackURL: 'http://localhost:3000/api/auth/yandex/callback',
+            frontendRedirectURL: 'http://localhost:8080/',
+          },
         },
       ],
     }).compile();
@@ -95,5 +107,27 @@ describe('AuthController', () => {
       controller.logout({ user: { sub: 'user-1' } }),
     ).resolves.toEqual({ message: 'Успешный выход' });
     expect(logout).toHaveBeenCalledWith('user-1');
+  });
+
+  it('yandexCallback redirects to frontend with tokens', async () => {
+    const user = {
+      id: 'user-1',
+      email: 'alex@mail.com',
+      role: Roles.USER,
+    };
+    completeOAuthLogin.mockResolvedValue({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
+    const redirect = jest.fn();
+
+    await controller.yandexCallback({ user: user as never }, {
+      redirect,
+    } as never);
+
+    expect(completeOAuthLogin).toHaveBeenCalledWith(user);
+    expect(redirect).toHaveBeenCalledWith(
+      'http://localhost:8080/?accessToken=access-token&refreshToken=refresh-token',
+    );
   });
 });

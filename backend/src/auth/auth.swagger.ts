@@ -200,3 +200,31 @@ export function ApiLogout() {
     ApiResponse({ status: 401, description: 'Требуется access-токен' }),
   );
 }
+
+export function ApiYandexLogin() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Вход через Yandex OAuth',
+      description: 'Редирект на страницу авторизации Яндекса',
+    }),
+    ApiResponse({
+      status: 302,
+      description: 'Редирект на oauth.yandex.ru',
+    }),
+  );
+}
+
+export function ApiYandexCallback() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Callback Yandex OAuth',
+      description:
+        'После успешной авторизации редирект на фронт с accessToken и refreshToken в query',
+    }),
+    ApiResponse({
+      status: 302,
+      description: 'Редирект на FRONTEND_OAUTH_REDIRECT_URL с токенами',
+    }),
+    ApiResponse({ status: 401, description: 'Ошибка OAuth или нет email' }),
+  );
+}
