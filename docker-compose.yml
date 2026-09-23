@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: skillswap
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d skillswap']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    ports:
+      - '3000:3000'
+    environment:
+      PORT: 3000
+      NODE_ENV: test
+      SALT_ROUNDS: 10
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: skillswap
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_ACCESS_SECRET: dev_access_secret
+      JWT_REFRESH_SECRET: dev_refresh_secret
+      JWT_ACCESS_EXPIRES_IN: 1h
+      JWT_REFRESH_EXPIRES_IN: 7d
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

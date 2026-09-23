@@ -6,16 +6,10 @@ import { City } from './entities/city.entity';
 
 describe('Сервис городов', () => {
   let service: CitiesService;
-  let count: jest.Mock;
-  let create: jest.Mock;
-  let save: jest.Mock;
   let find: jest.Mock;
   let findOne: jest.Mock;
 
   beforeEach(async () => {
-    count = jest.fn();
-    create = jest.fn((payload: Partial<City>) => payload as City);
-    save = jest.fn();
     find = jest.fn();
     findOne = jest.fn();
 
@@ -25,9 +19,6 @@ describe('Сервис городов', () => {
         {
           provide: getRepositoryToken(City),
           useValue: {
-            count,
-            create,
-            save,
             find,
             findOne,
           },
@@ -63,33 +54,5 @@ describe('Сервис городов', () => {
     findOne.mockResolvedValue(null);
 
     await expect(service.findByName('Неттакого')).resolves.toBeNull();
-  });
-
-  it('не заполняет города если они уже есть', async () => {
-    count.mockResolvedValue(10);
-
-    await service.onModuleInit();
-
-    expect(save).not.toHaveBeenCalled();
-  });
-
-  it('заполняет города если таблица пустая', async () => {
-    count.mockResolvedValue(0);
-    save.mockResolvedValue([]);
-
-    await service.onModuleInit();
-
-    expect(create).toHaveBeenCalled();
-    expect(save).toHaveBeenCalledTimes(1);
-    expect(save).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ name: 'Москва' })]),
-    );
-  });
-
-  it('игнорирует ошибки при заполнении', async () => {
-    count.mockRejectedValue(new Error('db unavailable'));
-
-    await expect(service.onModuleInit()).resolves.toBeUndefined();
-    expect(save).not.toHaveBeenCalled();
   });
 });

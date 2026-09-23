@@ -208,14 +208,6 @@ describe('SkillsService', () => {
     });
   });
 
-  describe('findOne', () => {
-    it('returns placeholder string', () => {
-      expect(service.findOne('skill-1')).toBe(
-        'This action returns a #skill-1 skill',
-      );
-    });
-  });
-
   describe('findById', () => {
     it('returns skill by id', async () => {
       const skill = { id: 'skill-1' } as Skill;

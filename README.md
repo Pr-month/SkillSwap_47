@@ -22,6 +22,38 @@ NODE_ENV=test npm run migration:run
 
 Для локального Postgres / Docker DB нужен `NODE_ENV=test` (иначе TypeORM включает SSL).  
 `migration:generate` / `migration:revert` — те же скрипты в `backend/package.json`.
+## Docker
+
+Поднять Postgres и API:
+
+```bash
+docker compose up --build
+```
+
+Swagger: `http://localhost:3000/api/docs`.
+
+Сиды — с хоста (в runtime-образе нет `ts-node`), когда БД уже слушает `localhost:5432`:
+
+```bash
+cd backend
+DB_HOST=localhost DB_PORT=5432 DB_NAME=skillswap DB_USERNAME=postgres DB_PASSWORD=postgres npm run seed:cities
+# далее seed:categories, seed:admin, seed:users, seed:skills
+```
+
+## Сиды
+
+При старте приложение **не** наполняет БД. Данные добавляются явно из `backend/`:
+
+```bash
+cd backend
+npm run seed:cities
+npm run seed:categories
+npm run seed:admin
+npm run seed:users
+npm run seed:skills
+```
+
+Повторно запускать можно — дубли не плодятся.
 
 ## Документация
 [Техническое задание](https://docs.google.com/document/d/1d4o9Sb9o6lxXuqdEgKe4eRlH2s7gKrh0icJ3gyv2FD4/edit?tab=t.0#heading=h.ynonjn54b672) <br>
