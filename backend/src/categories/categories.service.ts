@@ -2,50 +2,21 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  Logger,
   NotFoundException,
-  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, QueryFailedError, Repository } from 'typeorm';
-import { CATEGORIES_SEED } from './categories.data';
 import { CategoryTreeDto } from './dto/category-tree.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
 
 @Injectable()
-export class CategoriesService implements OnModuleInit {
-  private readonly logger = new Logger(CategoriesService.name);
-
+export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoriesRepository: Repository<Category>,
   ) {}
-
-  async onModuleInit(): Promise<void> {
-    try {
-      const count = await this.categoriesRepository.count();
-      if (count > 0) {
-        return;
-      }
-
-      for (const item of CATEGORIES_SEED) {
-        const parent = await this.categoriesRepository.save(
-          this.categoriesRepository.create({ name: item.name }),
-        );
-        await this.categoriesRepository.save(
-          item.children.map((name) =>
-            this.categoriesRepository.create({ name, parent }),
-          ),
-        );
-      }
-    } catch (error) {
-      this.logger.warn(
-        `Сид категорий пропущен: ${error instanceof Error ? error.message : error}`,
-      );
-    }
-  }
 
   async findTree(): Promise<CategoryTreeDto[]> {
     const categories = await this.categoriesRepository.find({

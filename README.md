@@ -11,6 +11,21 @@ npm run start:dev
 
 Новые ветки создавай от `dev`, PR — в `dev`.
 
+## Сиды
+
+При старте приложение **не** наполняет БД. Данные добавляются явно из `backend/`:
+
+```bash
+cd backend
+npm run seed:cities
+npm run seed:categories
+npm run seed:admin
+npm run seed:users
+npm run seed:skills
+```
+
+Повторно запускать можно — дубли не плодятся.
+
 ## Документация
 [Техническое задание](https://docs.google.com/document/d/1d4o9Sb9o6lxXuqdEgKe4eRlH2s7gKrh0icJ3gyv2FD4/edit?tab=t.0#heading=h.ynonjn54b672) <br>
 [Макет](https://www.figma.com/design/bKwOakHJI7Z2mh2zVCBphP/SkillSwap---Для-разработчиков?node-id=0-1&p=f&t=HH7S4bYwVVtxLM6z-0)
