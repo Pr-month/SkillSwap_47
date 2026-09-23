@@ -65,10 +65,6 @@ export class SkillsService {
     return { data, page, totalPages };
   }
 
-  findOne(id: string) {
-    return `This action returns a #${id} skill`;
-  }
-
   async findById(id: string): Promise<Skill> {
     const skill = await this.skillsRepository.findOne({
       where: { id },
