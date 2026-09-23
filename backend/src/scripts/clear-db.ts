@@ -5,7 +5,10 @@ async function clearDb() {
     await AppDataSource.initialize();
   }
 
-  await AppDataSource.synchronize(true);
+  await AppDataSource.query('DROP SCHEMA public CASCADE');
+  await AppDataSource.query('CREATE SCHEMA public');
+  await AppDataSource.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
+  await AppDataSource.runMigrations();
 }
 
 void clearDb().finally(() => {
