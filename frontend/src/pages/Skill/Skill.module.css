@@ -1,0 +1,91 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 36px 32px 60px;
+}
+
+.topSection {
+  display: grid;
+  grid-template-columns: minmax(324px, 1fr) minmax(1020px, 2fr);
+  gap: 24px;
+
+  /* padding: 24px; */
+}
+
+.userCard {
+  height: fit-content;
+}
+
+.skillColumn {
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px 52px 40px;
+  border-radius: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.actionButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: #253017;
+}
+
+.actionSymbol {
+  font-size: 18px;
+  line-height: 1;
+  color: #253017;
+}
+
+.exchangeButton {
+  width: 100%;
+  gap: 8px;
+}
+
+.exchangeButton:disabled {
+  opacity: 1;
+  background-color: #fff;
+  color: #253017 !important;
+  border: 1px solid #abd27a !important;
+}
+
+.notFoundCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.notFoundTitle {
+  margin: 0;
+  font-size: 32px;
+  line-height: 40px;
+  color: #253017;
+}
+
+.notFoundText {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: #69735d;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.activeSwap {
+  border-color: #abd27a;
+}

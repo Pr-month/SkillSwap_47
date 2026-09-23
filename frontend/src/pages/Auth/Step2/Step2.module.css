@@ -1,0 +1,90 @@
+.formCard {
+  display: flex;
+  align-items: center;
+}
+
+.form {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.avatarContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+/* Инпуты в ряд (Дата и Пол) */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Ровно 2 колонки */
+  gap: 16px; /* Фиксированный отступ */
+  width: 100%;
+  align-items: start;
+}
+
+/* ЗАСТАВЛЯЕМ компоненты и инпуты внутри них сжиматься */
+.row > * {
+  width: 100% !important;
+  min-width: 0 !important; /* Магическое свойство для сжатия */
+}
+
+/* Принудительно сжимаем сам HTML-тег инпута внутри DataInput */
+.row input {
+  min-width: 0 !important;
+  width: 100%;
+}
+
+/* Предотвращаем вылезание оберток инпутов за края формы */
+.form > div {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Кнопки Назад / Продолжить */
+.buttonRow {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  width: 100%;
+}
+
+.actionButton {
+  flex: 1;
+  width: 100%;
+}
+
+.buttonRow button {
+  flex: 1;
+  width: 100%;
+}
+
+/* Иллюстрация справа */
+.hintIcon {
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Обёртка для поля "Город" */
+.cityWrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Принудительно заставляем SelectSearch занимать 100% формы, а не 436px */
+.cityInputOverride {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.row > *:nth-child(2) {
+  margin-top: -6px; /* Поднимаем поле "Пол" немного наверх */
+}

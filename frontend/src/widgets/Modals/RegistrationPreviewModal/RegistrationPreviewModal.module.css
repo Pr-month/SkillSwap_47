@@ -1,0 +1,48 @@
+.overlay {
+  background: rgb(142 142 142 / 60%);
+}
+
+.container {
+  width: min(100%, 920px);
+  min-width: 0;
+  padding: 8px 0 0;
+  overflow-x: hidden;
+}
+
+.title {
+  margin: 0;
+  font-family: Jost, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 28px;
+  text-align: center;
+  color: #253017;
+}
+
+.subtitle {
+  margin: 8px 0 36px;
+  font-family: Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  text-align: center;
+  color: #69735d;
+}
+
+.cardWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.actionButton {
+  min-width: 164px;
+}
+
+.editButton {
+  gap: 8px;
+}
+
+.editIcon {
+  width: 24px;
+  height: 24px;
+}
