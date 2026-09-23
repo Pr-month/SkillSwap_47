@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtPayload } from '@supabase/supabase-js';
 import { RequestStatus } from 'src/common/enums/request-status.enum';
 import { Roles } from 'src/common/enums/user-role.enum';
+import { MailService } from 'src/mail/mail.service';
 import { NotificationsGateway } from 'src/notification/notifications.gateway';
 import { SkillsService } from 'src/skills/skills.service';
 import { Repository } from 'typeorm';
@@ -23,6 +24,7 @@ export class RequestsService {
     private readonly requestsRepository: Repository<SkillRequest>,
     private readonly skillsService: SkillsService,
     private readonly notificationsGateway: NotificationsGateway,
+    private readonly mailService: MailService,
   ) {}
 
   async create(senderId: string, dto: CreateRequestDto) {
@@ -86,6 +88,10 @@ export class RequestsService {
         type: 'new',
         skillName: created.requestedSkill.title,
         fromUser: created.sender.name,
+      });
+      await this.mailService.sendUserNotification(created.receiver.email, {
+        subject: 'Новая заявка на SkillSwap',
+        text: `${created.sender.name} отправил(а) вам заявку по навыку «${created.requestedSkill.title}».`,
       });
     }
 
@@ -152,10 +158,16 @@ export class RequestsService {
       saved.status === RequestStatus.ACCEPTED ||
       saved.status === RequestStatus.REJECTED
     ) {
+      const statusLabel =
+        saved.status === RequestStatus.ACCEPTED ? 'принята' : 'отклонена';
       this.notificationsGateway.notifyUser(saved.sender.id, {
         type: saved.status === RequestStatus.ACCEPTED ? 'accepted' : 'rejected',
         skillName: saved.requestedSkill.title,
         fromUser: saved.receiver.name,
+      });
+      await this.mailService.sendUserNotification(saved.sender.email, {
+        subject: 'Обновление заявки на SkillSwap',
+        text: `${saved.receiver.name} ${statusLabel} вашу заявку по навыку «${saved.requestedSkill.title}».`,
       });
     }
 

@@ -10,13 +10,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
 import { DataSource, QueryFailedError, Repository } from 'typeorm';
-import { appConfig, IConfig } from '../config/app.config';
 import { CategoriesService } from '../categories/categories.service';
 import { CitiesService } from '../cities/cities.service';
+import { Roles } from '../common/enums/user-role.enum';
+import { appConfig, IConfig } from '../config/app.config';
 import { IJwtConfig, jwtConfig } from '../config/jwt.config';
+import { MailService } from '../mail/mail.service';
 import { Skill } from '../skills/entities/skill.entity';
 import { User } from '../users/entities/user.entity';
-import { Roles } from '../common/enums/user-role.enum';
 import { UsersService } from '../users/users.service';
 import { RefreshAuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly categoriesService: CategoriesService,
     private readonly jwtService: JwtService,
     private readonly dataSource: DataSource,
+    private readonly mailService: MailService,
     @Inject(jwtConfig.KEY)
     private readonly jwt: IJwtConfig,
     @Inject(appConfig.KEY)
@@ -193,6 +195,12 @@ export class AuthService {
       await this.usersService.updateRefreshToken(userId, refreshTokenHash);
 
       const user = await this.usersService.findPublicById(userId);
+
+      await this.mailService.sendUserNotification(email, {
+        subject: 'Регистрация на SkillSwap',
+        text: `Здравствуйте${user?.name ? `, ${user.name}` : ''}! Вы успешно зарегистрировались на SkillSwap.`,
+      });
+
       return {
         user: this.toPublicUser(user),
         accessToken: tokens.accessToken,
