@@ -20,6 +20,7 @@ import { Roles } from '../common/enums/user-role.enum';
 import { UsersService } from '../users/users.service';
 import { RefreshAuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
+import { OAuthUserDto } from './dto/oauth-user.dto';
 import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
@@ -51,32 +52,87 @@ export class AuthService {
     });
 
     const passwordValid =
-      !!user && (await bcrypt.compare(loginDto.password, user.password));
+      !!user?.password &&
+      (await bcrypt.compare(loginDto.password, user.password));
 
     if (!user || !passwordValid) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
 
-    const tokens = await this.issueTokens(user.id, user.email, user.role);
-    const refreshTokenHash = await bcrypt.hash(
-      tokens.refreshToken,
-      this.appCfg.saltRounds,
-    );
-    await this.usersRepository.update(user.id, {
-      refreshToken: refreshTokenHash,
+    return this.buildAuthResponse(user, 'Успешный вход');
+  }
+
+  async loginWithOAuth(oauthData: OAuthUserDto) {
+    const user = await this.findOrCreateOAuthUser(oauthData);
+    return this.buildAuthResponse(user, 'Успешный вход через Яндекс');
+  }
+
+  async findOrCreateOAuthUser(data: OAuthUserDto): Promise<User> {
+    if (!data.email) {
+      throw new BadRequestException(
+        'Не удалось получить email от провайдера OAuth',
+      );
+    }
+
+    const email = data.email.toLowerCase();
+    const name = (data.name?.trim() || email.split('@')[0]).slice(0, 32);
+
+    const select = {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      provider: true,
+      providerId: true,
+      avatar: true,
+    } as const;
+
+    let user = await this.usersRepository.findOne({
+      where: { provider: data.provider, providerId: data.providerId },
+      select,
     });
 
-    return {
-      message: 'Успешный вход',
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    };
+    if (!user) {
+      user = await this.usersRepository.findOne({
+        where: { email },
+        select,
+      });
+    }
+
+    if (!user) {
+      return this.usersRepository.save(
+        this.usersRepository.create({
+          name,
+          email,
+          password: null,
+          about: null,
+          birthdate: null,
+          city: null,
+          gender: null,
+          avatar: data.avatar ?? '',
+          role: Roles.USER,
+          provider: data.provider,
+          providerId: data.providerId,
+          refreshToken: null,
+        }),
+      );
+    }
+
+    const updates: Partial<User> = {};
+    if (!user.provider || !user.providerId) {
+      updates.provider = data.provider;
+      updates.providerId = data.providerId;
+    }
+    if (!user.avatar && data.avatar) {
+      updates.avatar = data.avatar;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await this.usersRepository.update(user.id, updates);
+      Object.assign(user, updates);
+    }
+
+    return user;
   }
 
   async refresh(authUser: RefreshAuthUser) {
@@ -210,6 +266,32 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  private async buildAuthResponse(
+    user: Pick<User, 'id' | 'email' | 'name' | 'role'>,
+    message: string,
+  ) {
+    const tokens = await this.issueTokens(user.id, user.email, user.role);
+    const refreshTokenHash = await bcrypt.hash(
+      tokens.refreshToken,
+      this.appCfg.saltRounds,
+    );
+    await this.usersRepository.update(user.id, {
+      refreshToken: refreshTokenHash,
+    });
+
+    return {
+      message,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   private async issueTokens(userId: string, email: string, role: Roles) {

@@ -1,4 +1,8 @@
-import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  RequestMethod,
+  ValidationPipe,
+} from '@nestjs/common';
 import { NestFactory, Reflector } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
@@ -24,7 +28,13 @@ async function bootstrap() {
   });
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
-  app.setGlobalPrefix('api');
+  // Yandex OAuth redirect URI is registered without /api prefix
+  app.setGlobalPrefix('api', {
+    exclude: [
+      { path: 'auth/yandex/login', method: RequestMethod.GET },
+      { path: 'auth/yandex/callback', method: RequestMethod.GET },
+    ],
+  });
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, document, { useGlobalPrefix: true });
   const config = app.get<IConfig>(appConfig.KEY);
