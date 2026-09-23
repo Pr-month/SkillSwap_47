@@ -11,6 +11,24 @@ npm run start:dev
 
 Новые ветки создавай от `dev`, PR — в `dev`.
 
+## Docker
+
+Поднять Postgres и API:
+
+```bash
+docker compose up --build
+```
+
+Swagger: `http://localhost:3000/api/docs`.
+
+Сиды — с хоста (в runtime-образе нет `ts-node`), когда БД уже слушает `localhost:5432`:
+
+```bash
+cd backend
+DB_HOST=localhost DB_PORT=5432 DB_NAME=skillswap DB_USERNAME=postgres DB_PASSWORD=postgres npm run seed:cities
+# далее seed:categories, seed:admin, seed:users, seed:skills
+```
+
 ## Сиды
 
 При старте приложение **не** наполняет БД. Данные добавляются явно из `backend/`:
