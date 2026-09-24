@@ -25,7 +25,7 @@ export const RegistrationPreviewModal = ({
   description,
   images,
 }: Props) => {
-  const fallbackImage = '/images/skills/sk1-1.png'
+  const fallbackImage = '/placeholder.svg'
 
   const preparedImages = useMemo(() => {
     const objectUrlsToRevoke: string[] = []
