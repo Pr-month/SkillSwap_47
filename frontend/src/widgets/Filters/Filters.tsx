@@ -30,8 +30,8 @@ export const Filters = () => {
 
   const [showAllCategories, setShowAllCategories] = useState(false)
   const [showAllCities, setShowAllCities] = useState(false)
-  const [expandedCategoryId, setExpandedCategoryId] = useState<number | null>(null)
-  const [, setActiveArrowCategoryId] = useState<number | null>(null)
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null)
+  const [, setActiveArrowCategoryId] = useState<string | null>(null)
 
   const visibleCategories = showAllCategories
     ? categories
@@ -43,7 +43,7 @@ export const Filters = () => {
   )
   const visibleCities = showAllCities ? cities : cities.slice(0, DEFAULTVISIBLECITYCOUNT)
 
-  const handleCategoryToggle = (categoryId: number) => {
+  const handleCategoryToggle = (categoryId: string) => {
     const hasSubcategories = subcategories.some(
       (subcategory) => subcategory.categoryId === categoryId,
     )
@@ -81,7 +81,7 @@ export const Filters = () => {
     }
   }
 
-  const handleSubcategoryToggle = (subcategoryId: number, categoryId: number) => {
+  const handleSubcategoryToggle = (subcategoryId: string, categoryId: string) => {
     const isSelected = selectedSubcategoryIds.includes(subcategoryId)
     const newSubcategoryIds = isSelected
       ? selectedSubcategoryIds.filter((id) => id !== subcategoryId)
@@ -102,7 +102,7 @@ export const Filters = () => {
 
     dispatch(setSelectedCategories(newCategoryIds))
   }
-  const toggleCategoryExpand = (categoryId: number) => {
+  const toggleCategoryExpand = (categoryId: string) => {
     setExpandedCategoryId((prev) => (prev === categoryId ? null : categoryId))
   }
 
@@ -178,7 +178,7 @@ export const Filters = () => {
               <li key={category.id} className={styles.listItem}>
                 <div className={styles.categoryRow}>
                   <Checkbox
-                    label={category.title}
+                    label={category.name}
                     checked={selectedCategoryIds.includes(category.id) || isCategoryIndeterminate}
                     showArrow={false}
                     isIndeterminate={isCategoryIndeterminate}
@@ -188,7 +188,7 @@ export const Filters = () => {
                     <button
                       type="button"
                       className={styles.expandButton}
-                      aria-label={`Показать подкатегории: ${category.title}`}
+                      aria-label={`Показать подкатегории: ${category.name}`}
                       onClick={() => toggleCategoryExpand(category.id)}
                     >
                       <span className={styles.expandIcon}>
@@ -203,7 +203,7 @@ export const Filters = () => {
                     {categorySubcategories.map((subcategory) => (
                       <li key={subcategory.id} className={styles.sublistItem}>
                         <Checkbox
-                          label={subcategory.title}
+                          label={subcategory.name}
                           checked={selectedSubcategoryIds.includes(subcategory.id)}
                           showArrow={false}
                           onChange={() => handleSubcategoryToggle(subcategory.id, category.id)}

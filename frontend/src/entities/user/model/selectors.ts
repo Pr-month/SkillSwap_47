@@ -39,12 +39,13 @@ export const selectFilteredUsers = createSelector(
           const usersSkills = skills.filter((skill) => skill.userId === user.id)
           //при all не работала сортировка вообще, исправлено
           if (filters.selectedSubcategoryIds.length > 0) {
+            const selected = new Set(filters.selectedSubcategoryIds)
             const canTeach = usersSkills.some((skill) =>
-              filters.selectedSubcategoryIds.includes(skill.subcategoryId),
+              selected.has(String(skill.subcategoryId)),
             )
 
             const wantLearn = user.subcategoriesWanted.some((subId) =>
-              filters.selectedSubcategoryIds.includes(subId),
+              selected.has(String(subId)),
             )
 
             if (filters.skillsType === 'canTeach' && !canTeach) return false

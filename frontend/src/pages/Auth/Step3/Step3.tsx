@@ -118,10 +118,10 @@ const AuthStepThirdPage: React.FC = () => {
             <Select
               label="Категория навыка"
               placeholder={isLoading ? 'Загрузка...' : 'Выберите категорию'}
-              options={categories.map((c) => c.title || '')}
-              value={currentCategory?.title || ''}
+              options={categories.map((c) => c.name || '')}
+              value={currentCategory?.name || ''}
               onChange={(selectedTitle) => {
-                const cat = categories.find((c) => c.title === selectedTitle)
+                const cat = categories.find((c) => c.name === selectedTitle)
                 if (cat) {
                   const newCatId = String(cat.id)
                   setValue('categoryId', newCatId, { shouldValidate: true })
@@ -140,10 +140,10 @@ const AuthStepThirdPage: React.FC = () => {
             <Select
               label="Подкатегория навыка"
               placeholder={isLoading ? 'Загрузка...' : 'Выберите подкатегорию'}
-              options={filteredSubcategories.map((s) => s.title || '')}
-              value={currentSubcategory?.title || ''}
+              options={filteredSubcategories.map((s) => s.name || '')}
+              value={currentSubcategory?.name || ''}
               onChange={(selectedTitle) => {
-                const sub = filteredSubcategories.find((s) => s.title === selectedTitle)
+                const sub = filteredSubcategories.find((s) => s.name === selectedTitle)
                 if (sub) {
                   const newSubId = String(sub.id)
                   setValue('subcategoryId', newSubId, { shouldValidate: true })
@@ -245,7 +245,7 @@ const AuthStepThirdPage: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onComplete={handleCompleteRegistration}
         title={watch('title') || 'Без названия'}
-        category={[currentCategory?.title, currentSubcategory?.title].filter(Boolean).join(' / ')}
+        category={[currentCategory?.name, currentSubcategory?.name].filter(Boolean).join(' / ')}
         description={watch('description') || 'Описание не заполнено'}
         images={(watch('imagesUrl') as Array<string>) || []}
       />

@@ -124,8 +124,8 @@ describe('Проверяем работу селекторов', () => {
         ...initialState,
         filter: {
           skillsType: 'canTeach',
-          selectedCategoryIds: [1],
-          selectedSubcategoryIds: [6],
+          selectedCategoryIds: ['1'],
+          selectedSubcategoryIds: ['6'],
           gender: 'male',
           city: ['Казань'],
           searchText: 'Минимум',
@@ -140,7 +140,7 @@ describe('Проверяем работу селекторов', () => {
         filter: {
           ...filterStateInitial,
           skillsType: 'wantToLearn',
-          selectedSubcategoryIds: [42],
+          selectedSubcategoryIds: ['42'],
         },
       }
       const result = selectFilteredUsers(newState)
@@ -152,7 +152,7 @@ describe('Проверяем работу селекторов', () => {
         filter: {
           ...filterStateInitial,
           skillsType: 'all',
-          selectedSubcategoryIds: [42],
+          selectedSubcategoryIds: ['42'],
         },
       }
       const result = selectFilteredUsers(newState)

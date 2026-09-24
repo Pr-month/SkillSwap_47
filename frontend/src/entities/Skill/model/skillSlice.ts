@@ -3,6 +3,7 @@ import { getSkillsApi, createSkillApi, updateSkillApi } from '../../../api/skill
 import { getCategoriesApi } from '../../../api/categoriesApi'
 import { getSubcategoriesApi } from '../../../api/subcategoriesApi'
 import type { TSkill, TCategory, TSubcategory } from '../../../shared/utils/types'
+import { flattenCategoriesToSubcategories } from '../../../shared/utils/types'
 
 export type skillState = {
   allSkills: TSkill[]
@@ -117,6 +118,7 @@ const skillSlice = createSlice({
       })
       .addCase(getAllCategories.fulfilled, (state, action: PayloadAction<TCategory[]>) => {
         state.allCategories = action.payload
+        state.allSubcategories = flattenCategoriesToSubcategories(action.payload)
         state.isLoading = false
       })
       .addCase(getAllCategories.rejected, (state, action) => {

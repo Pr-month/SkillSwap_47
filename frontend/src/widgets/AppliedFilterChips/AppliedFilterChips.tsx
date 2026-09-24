@@ -37,13 +37,13 @@ export const AppliedFilterChips = () => {
   }
 
   ;[...filters.selectedSubcategoryIds]
-    .sort((a, b) => a - b)
+    .sort((a, b) => a.localeCompare(b))
     .forEach((subcategoryId) => {
       const sub = allSubcategories.find((s) => s.id === subcategoryId)
       if (!sub) return
       appliedFilterChips.push({
         id: `sub-${subcategoryId}`,
-        label: sub.title,
+        label: sub.name,
         onDismiss: () => {
           const newSubcategoryIds = filters.selectedSubcategoryIds.filter(
             (id) => id !== subcategoryId,
@@ -70,7 +70,7 @@ export const AppliedFilterChips = () => {
     if (!category) return
     appliedFilterChips.push({
       id: `cat-${categoryId}`,
-      label: category.title,
+      label: category.name,
       onDismiss: () =>
         dispatch(
           setSelectedCategories(filters.selectedCategoryIds.filter((id) => id !== categoryId)),

@@ -93,34 +93,37 @@ describe('Проверяем работу skillSlice', () => {
 
   const testListCategories: TCategory[] = [
     {
-      id: 1,
-      title: 'Бизнес и карьера',
+      id: '1',
+      name: 'Бизнес и карьера',
+      children: [{ id: '2', name: 'Управление командой' }],
     },
     {
-      id: 2,
-      title: 'Творчество и искусство',
+      id: '2',
+      name: 'Творчество и искусство',
+      children: [{ id: '1', name: 'Рисование и иллюстрация' }],
     },
     {
-      id: 3,
-      title: 'Иностранные языки',
+      id: '3',
+      name: 'Иностранные языки',
+      children: [{ id: '3', name: 'Немецкий' }],
     },
   ]
 
   const testListSubcategories: TSubcategory[] = [
     {
-      id: 2,
-      title: 'Управление командой',
-      categoryId: 1,
+      id: '2',
+      name: 'Управление командой',
+      categoryId: '1',
     },
     {
-      id: 1,
-      title: 'Рисование и иллюстрация',
-      categoryId: 2,
+      id: '1',
+      name: 'Рисование и иллюстрация',
+      categoryId: '2',
     },
     {
-      id: 3,
-      title: 'Немецкий',
-      categoryId: 3,
+      id: '3',
+      name: 'Немецкий',
+      categoryId: '3',
     },
   ]
 
@@ -137,6 +140,7 @@ describe('Проверяем работу skillSlice', () => {
   const stateGetAllCategoriesFulfilled = {
     ...initialState,
     allCategories: testListCategories,
+    allSubcategories: testListSubcategories,
     isLoading: false,
   }
   const stateGetAllSubcategoriesFulfilled = {
