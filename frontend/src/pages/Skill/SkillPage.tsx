@@ -17,7 +17,7 @@ import { toggleFavorite } from '../../entities/user/model/userSlice'
 import { addToSwap } from '../../entities/Skill/model/skillSlice'
 import clsx from 'clsx'
 
-const FALLBACK_IMAGE = '/images/skills/sk1-1.png'
+const FALLBACK_IMAGE = '/placeholder.svg'
 
 const getSafeSubcategories = (
   wantedIds: number[] | undefined,

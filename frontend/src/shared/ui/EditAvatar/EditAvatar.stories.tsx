@@ -48,7 +48,7 @@ type Story = StoryObj<typeof EditAvatar>
 
 export const Default: Story = {
   args: {
-    avatarUrl: '/images/users/default-avatar.png',
+    avatarUrl: '/placeholder.svg',
     alt: 'Аватар пользователя',
     ariaLabel: 'Изменить фото профиля',
   },

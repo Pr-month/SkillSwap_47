@@ -49,7 +49,7 @@ export const Header = ({ withFakeNotifications = false, variant = 'default' }: P
   const profileUser = useAppSelector((state) => state.user.profileUser)
   const isAuth = !!profileUser
   const userAvatar = useMemo(() => {
-    if (!profileUser?.avatarUrl) return '/images/users/default-avatar.png'
+    if (!profileUser?.avatarUrl) return '/placeholder.svg'
 
     // if (profileUser.avatarUrl instanceof File) {
     //   return URL.createObjectURL(profileUser.avatarUrl)
