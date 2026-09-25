@@ -115,7 +115,7 @@ export const SkillLayout = ({
       <ul className={styles.userListSkill}>
         {(showAllSkillpage ? similarUsers : similarUsers.slice(0, 4)).map(({ user, userSkill }) => {
           const userSubs = allSubcategories.filter((sub) =>
-            user.subcategoriesWanted.includes(sub.id),
+            user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
           )
 
           return (
@@ -155,7 +155,7 @@ export const FavoritesLayout = ({
       <ul className={styles.userList}>
         {favoriteUsers.slice(0, visibleCount).map((user) => {
           const userSubs = allSubcategories.filter((sub) =>
-            user.subcategoriesWanted.includes(sub.id),
+            user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
           )
           const userSkill = allSkills.find((skill) => skill.userId === user.id)
           return (
@@ -277,7 +277,7 @@ export const UserList = ({
         <ul className={styles.userList}>
           {slice.map((user) => {
             const userSubs = allSubcategories.filter((sub) =>
-              user.subcategoriesWanted.includes(sub.id),
+              user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
             )
             const userSkill = allSkills.find((skill) => skill.userId === user.id)
             return (
@@ -310,7 +310,7 @@ export const UserList = ({
         <ul className={styles.userList}>
           {(showAllPopular ? usersPopular.slice(0, pVis) : usersPopular.slice(0, 3)).map((user) => {
             const userSubs = allSubcategories.filter((sub) =>
-              user.subcategoriesWanted.includes(sub.id),
+              user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
             )
             const userSkill = allSkills.find((skill) => skill.userId === user.id)
             return (
@@ -338,7 +338,7 @@ export const UserList = ({
         <ul className={styles.userList}>
           {(showAllNew ? usersNew.slice(0, nVis) : usersNew.slice(0, 3)).map((user) => {
             const userSubs = allSubcategories.filter((sub) =>
-              user.subcategoriesWanted.includes(sub.id),
+              user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
             )
             const userSkill = allSkills.find((skill) => skill.userId === user.id)
             return (
@@ -361,7 +361,7 @@ export const UserList = ({
         <ul className={styles.userList}>
           {usersRecommended.slice(0, rVis).map((user) => {
             const userSubs = allSubcategories.filter((sub) =>
-              user.subcategoriesWanted.includes(sub.id),
+              user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
             )
             const userSkill = allSkills.find((skill) => skill.userId === user.id)
             return (

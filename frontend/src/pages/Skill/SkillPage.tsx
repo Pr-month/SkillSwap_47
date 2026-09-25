@@ -24,7 +24,7 @@ const getSafeSubcategories = (
   allSubcategories: TSubcategory[],
 ): TSubcategory[] => {
   const selected = (wantedIds || [])
-    .map((id) => allSubcategories.find((sub) => sub.id === id))
+    .map((id) => allSubcategories.find((sub) => sub.id === String(id)))
     .filter((sub): sub is TSubcategory => Boolean(sub))
 
   if (selected.length >= 2) {
@@ -64,10 +64,12 @@ const SkillPage: React.FC = () => {
   const categoryText = useMemo(() => {
     if (!skill) return ''
 
-    const categoryTitle = allCategories.find((category) => category.id === skill.categoryId)?.title
+    const categoryTitle = allCategories.find(
+      (category) => category.id === String(skill.categoryId),
+    )?.name
     const subcategoryTitle = allSubcategories.find(
-      (subcategory) => subcategory.id === skill.subcategoryId,
-    )?.title
+      (subcategory) => subcategory.id === String(skill.subcategoryId),
+    )?.name
 
     return [categoryTitle, subcategoryTitle].filter(Boolean).join(' / ')
   }, [skill, allCategories, allSubcategories])

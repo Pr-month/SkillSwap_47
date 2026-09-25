@@ -210,10 +210,10 @@ const AuthStepSecondPage: React.FC = () => {
                   <Select
                     label="Категория навыка, которому хотите научиться"
                     placeholder={isLoading ? 'Загрузка...' : 'Выберите категорию'}
-                    options={categories.map((c) => c.title)}
-                    value={currentCat?.title || ''}
+                    options={categories.map((c) => c.name)}
+                    value={currentCat?.name || ''}
                     onChange={(selectedName) => {
-                      const cat = categories.find((c) => c.title === selectedName)
+                      const cat = categories.find((c) => c.name === selectedName)
                       if (cat) {
                         const newCatId = String(cat.id)
                         field.onChange(newCatId)
@@ -245,10 +245,10 @@ const AuthStepSecondPage: React.FC = () => {
                   <Select
                     label="Подкатегория навыка, которому хотите научиться"
                     placeholder={isLoading ? 'Загрузка...' : 'Выберите подкатегорию'}
-                    options={filteredSubcategories.map((s) => s.title)}
-                    value={currentSub?.title || ''}
+                    options={filteredSubcategories.map((s) => s.name)}
+                    value={currentSub?.name || ''}
                     onChange={(selectedName) => {
-                      const sub = filteredSubcategories.find((s) => s.title === selectedName)
+                      const sub = filteredSubcategories.find((s) => s.name === selectedName)
                       if (sub) {
                         const newSubId = String(sub.id)
                         field.onChange(newSubId)

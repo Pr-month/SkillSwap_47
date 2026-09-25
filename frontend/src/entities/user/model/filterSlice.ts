@@ -2,8 +2,8 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
 export type filterState = {
   skillsType: 'all' | 'wantToLearn' | 'canTeach'
-  selectedCategoryIds: number[]
-  selectedSubcategoryIds: number[]
+  selectedCategoryIds: string[]
+  selectedSubcategoryIds: string[]
   gender: 'all' | 'male' | 'female'
   city: string[]
   searchText: string
@@ -35,10 +35,10 @@ const filterSlice = createSlice({
     setSkillsType(state, action: PayloadAction<'all' | 'wantToLearn' | 'canTeach'>) {
       state.skillsType = action.payload
     },
-    setSelectedCategories(state, action: PayloadAction<number[]>) {
+    setSelectedCategories(state, action: PayloadAction<string[]>) {
       state.selectedCategoryIds = action.payload
     },
-    setSelectedSubcategories(state, action: PayloadAction<number[]>) {
+    setSelectedSubcategories(state, action: PayloadAction<string[]>) {
       state.selectedSubcategoryIds = action.payload
     },
     setGender(state, action: PayloadAction<'all' | 'male' | 'female'>) {

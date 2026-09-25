@@ -39,16 +39,19 @@ describe('Проверяем работу filterSlice', () => {
     })
     describe('setSelectedCategories', () => {
       test('setSelectedCategories устанавливает категории', () => {
-        const prevState: filterState = { ...initialState, selectedCategoryIds: [1, 3, 5] }
-        const newState = filterSlice(prevState, setSelectedCategories([4, 6]))
-        expect(newState.selectedCategoryIds).toEqual([4, 6])
+        const prevState: filterState = { ...initialState, selectedCategoryIds: ['1', '3', '5'] }
+        const newState = filterSlice(prevState, setSelectedCategories(['4', '6']))
+        expect(newState.selectedCategoryIds).toEqual(['4', '6'])
       })
     })
     describe('setSelectedSubcategories', () => {
       test('setSelectedSubcategories устанавливает подкатегории', () => {
-        const prevState: filterState = { ...initialState, selectedSubcategoryIds: [1, 17, 32] }
-        const newState = filterSlice(prevState, setSelectedSubcategories([42, 12, 5]))
-        expect(newState.selectedSubcategoryIds).toEqual([42, 12, 5])
+        const prevState: filterState = {
+          ...initialState,
+          selectedSubcategoryIds: ['1', '17', '32'],
+        }
+        const newState = filterSlice(prevState, setSelectedSubcategories(['42', '12', '5']))
+        expect(newState.selectedSubcategoryIds).toEqual(['42', '12', '5'])
       })
     })
     describe('setGender', () => {

@@ -113,16 +113,16 @@ export const UserCard = ({
             <li
               key={subcategories[0].id}
               className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[subcategories[0].categoryId] || '#eee' }}
+              style={{ backgroundColor: categoryColors[Number(subcategories[0].categoryId)] || '#eee' }}
             >
-              {subcategories[0].title}
+              {subcategories[0].name}
             </li>
             <li
               key={subcategories[1].id}
               className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[subcategories[1].categoryId] || '#eee' }}
+              style={{ backgroundColor: categoryColors[Number(subcategories[1].categoryId)] || '#eee' }}
             >
-              {subcategories[1].title}
+              {subcategories[1].name}
             </li>
             <li>
               {subcategories.length > 2 && (
