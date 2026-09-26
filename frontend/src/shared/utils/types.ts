@@ -1,6 +1,6 @@
 //используем в компоненте UserList и UserCard(через пропс передаем)
 export type TUser = {
-  id: number
+  id: string
   name: string
   city: string
   birthDate: string
@@ -8,9 +8,9 @@ export type TUser = {
   email?: string
   password?: string
   about?: string
-  skillOfferedId: number
-  subcategoriesWanted: number[]
-  favoritesSkills?: number[]
+  skillOfferedId: string
+  subcategoriesWanted: string[]
+  favoritesSkills?: string[]
   createdAt?: string
   updatedAt?: string
   avatarUrl: string
@@ -25,16 +25,16 @@ export type TRegisterData = {
   birthDate: string
   gender: string
   about?: string
-  subcategoriesWanted: number[]
+  subcategoriesWanted: string[]
   avatarUrl: string
 }
 
 //нужно тому, кто будет делать SkillCard
 export type TSkill = {
-  id: number
-  categoryId: number
-  subcategoryId: number
-  userId: number
+  id: string
+  categoryId: string
+  subcategoryId: string
+  userId: string
   title: string
   description: string
   imagesUrl: string[]

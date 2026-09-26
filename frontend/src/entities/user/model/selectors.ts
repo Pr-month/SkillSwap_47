@@ -74,8 +74,8 @@ export const selectFilteredUsers = createSelector(
 )
 
 export const selectPopularUsers = createSelector([selectUsers], (users) => {
-  const allFavorites: number[] = users.flatMap((user) => user.favoritesSkills ?? [])
-  const skillCountMap: Record<number, number> = {}
+  const allFavorites: string[] = users.flatMap((user) => user.favoritesSkills ?? [])
+  const skillCountMap: Record<string, number> = {}
   allFavorites.forEach((skillId) => {
     skillCountMap[skillId] = (skillCountMap[skillId] || 0) + 1
   })
@@ -88,7 +88,7 @@ export const selectPopularUsers = createSelector([selectUsers], (users) => {
       return bScore - aScore
     }
 
-    //если одинаковое между двумя - по алфавиту
+    //без favorites (findAll бэка) — по имени
     return a.name.localeCompare(b.name, undefined, {
       sensitivity: 'base',
     })

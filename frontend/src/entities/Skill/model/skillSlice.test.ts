@@ -30,10 +30,10 @@ describe('Проверяем работу skillSlice', () => {
   }
 
   const testSkill: TSkill = {
-    id: Date.now(),
-    categoryId: 2,
-    subcategoryId: 15,
-    userId: 0,
+    id: String(Date.now()),
+    categoryId: '2',
+    subcategoryId: '15',
+    userId: '',
     title: 'Творчество без рамок',
     description:
       'Иногда лучшие идеи приходят, когда перестаёшь думать о правилах. Покажу, как отпустить контроль и делать живые вещи.',
@@ -48,10 +48,10 @@ describe('Проверяем работу skillSlice', () => {
 
   const testListSkills: TSkill[] = [
     {
-      id: 17,
-      categoryId: 2,
-      subcategoryId: 1,
-      userId: 17,
+      id: '17',
+      categoryId: '2',
+      subcategoryId: '1',
+      userId: '17',
       title: 'Визуал руками',
       description:
         'Иногда лучше сделать что-то руками, чем через экран. Покажу, как создавать простые, но атмосферные вещи для пространства и съёмок.',
@@ -63,10 +63,10 @@ describe('Проверяем работу skillSlice', () => {
       updatedAt: '2026-01-12T13:00:00Z',
     },
     {
-      id: 14,
-      categoryId: 1,
-      subcategoryId: 2,
-      userId: 14,
+      id: '14',
+      categoryId: '1',
+      subcategoryId: '2',
+      userId: '14',
       title: 'Сложные разговоры',
       description:
         'Когда разговор неприятный — большинство избегает. Я нет. Покажу, как вести диалог спокойно, не теряя позиции и не скатываясь в конфликт.',
@@ -79,10 +79,10 @@ describe('Проверяем работу skillSlice', () => {
       updatedAt: '2026-02-05T10:10:00Z',
     },
     {
-      id: 19,
-      categoryId: 3,
-      subcategoryId: 3,
-      userId: 19,
+      id: '19',
+      categoryId: '3',
+      subcategoryId: '3',
+      userId: '19',
       title: 'Японский в тишине',
       description:
         'Мне не близка гонка и перегруз, поэтому язык я учу иначе — спокойно, через повторение, атмосферу и ощущение ритма. Покажу, как разбирать японский без стресса и делать его частью тихих, восстановительных моментов.',
@@ -308,7 +308,7 @@ describe('Проверяем работу skillSlice', () => {
 
     test('addToSwap добавляет id навыков в массив для обмена', () => {
       const newState = skillSlice(initialStateForDrafts, addToSwap(testListSkills[0].id))
-      expect(newState.isForSwap).toEqual([17])
+      expect(newState.isForSwap).toEqual(['17'])
     })
   })
 })
