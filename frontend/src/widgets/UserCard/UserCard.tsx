@@ -110,25 +110,23 @@ export const UserCard = ({
         <div className={variant === 'detailed' ? styles.detailedSection : styles.section}>
           <h4 className={styles.sectionTitle}>Хочет научиться</h4>
           <ul className={styles.skillList}>
-            <li
-              key={subcategories[0].id}
-              className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[Number(subcategories[0].categoryId)] || '#eee' }}
-            >
-              {subcategories[0].name}
-            </li>
-            <li
-              key={subcategories[1].id}
-              className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[Number(subcategories[1].categoryId)] || '#eee' }}
-            >
-              {subcategories[1].name}
-            </li>
-            <li>
-              {subcategories.length > 2 && (
+            {subcategories.slice(0, 2).map((subcategory) => (
+              <li
+                key={subcategory.id}
+                className={styles.skillTag}
+                style={{
+                  backgroundColor: categoryColors[Number(subcategory.categoryId)] || '#eee',
+                }}
+              >
+                {subcategory.name}
+              </li>
+            ))}
+            {subcategories.length === 0 && <li className={styles.skillTag}>Не указано</li>}
+            {subcategories.length > 2 && (
+              <li>
                 <span className={styles.skillTag}>+{subcategories.length - 2}</span>
-              )}
-            </li>
+              </li>
+            )}
           </ul>
         </div>
       </div>
