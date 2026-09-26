@@ -74,7 +74,7 @@ export const selectFilteredUsers = createSelector(
 )
 
 export const selectPopularUsers = createSelector([selectUsers], (users) => {
-  const allFavorites: string[] = users.flatMap((user) => user.favoritesSkills ?? [])
+  const allFavorites: string[] = users.flatMap((user) => user.favoritesUserId ?? [])
   const skillCountMap: Record<string, number> = {}
   allFavorites.forEach((skillId) => {
     skillCountMap[skillId] = (skillCountMap[skillId] || 0) + 1

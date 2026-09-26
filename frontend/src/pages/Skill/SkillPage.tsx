@@ -74,8 +74,8 @@ const SkillPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const isLikedFromStore = skill?.id
-    ? (profileUser?.favoritesSkills?.includes(skill.id) ?? false)
+  const isLikedFromStore = user?.id
+    ? (profileUser?.favoritesUserId?.includes(user.id) ?? false)
     : false
   const isLiked = uiLiked ?? isLikedFromStore
   const isForSwap = profileUser && skill?.id ? profileSkill?.includes(skill.id) : false
@@ -90,15 +90,16 @@ const SkillPage: React.FC = () => {
       navigate('/login')
     }
 
-    const skillId = skill?.id
-    if (!skillId) return
+    const userId = user?.id
+    if (!userId) return
 
     if (isLocalProfileUser) {
-      dispatch(toggleFavorite(skillId))
+      dispatch(toggleFavorite(userId))
       return
     }
 
     setUiLiked((prev) => (prev === null ? !isLiked : !prev))
+    console.log('like', isLiked, isLocalProfileUser)
   }
 
   const isLoadingSkill = useAppSelector((state) => state.skill.isLoading)
