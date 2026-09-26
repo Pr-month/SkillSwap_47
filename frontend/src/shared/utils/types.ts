@@ -10,7 +10,7 @@ export type TUser = {
   about?: string
   skillOfferedId: string
   subcategoriesWanted: string[]
-  favoritesSkills?: string[]
+  favoritesUserId?: string[]
   createdAt?: string
   updatedAt?: string
   avatarUrl: string
