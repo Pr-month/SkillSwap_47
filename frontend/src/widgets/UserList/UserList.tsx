@@ -16,10 +16,10 @@ import type { TSkill, TUser, TSubcategory } from '../../shared/utils/types'
 
 const PAGE_SIZE = 20
 const DEFAULT_SKILL: TSkill = {
-  id: 0,
-  categoryId: 0,
-  subcategoryId: 0,
-  userId: 0,
+  id: '',
+  categoryId: '',
+  subcategoryId: '',
+  userId: '',
   title: 'Навыки не указаны',
   description: 'Пользователь еще не заполнил информацию о своих услугах',
   imagesUrl: [],
@@ -76,8 +76,8 @@ function InfiniteScrollSentinel({
 }
 
 interface SkillLayoutProps {
-  currentCategoryId?: number
-  currentUserId?: number
+  currentCategoryId?: string
+  currentUserId?: string
   allUsers: TUser[]
   allSkills: TSkill[]
   allSubcategories: TSubcategory[]
@@ -134,7 +134,7 @@ export const SkillLayout = ({
 
 interface FavoritesLayoutProps {
   allUsers: TUser[]
-  favoriteSkillIds: number[]
+  favoriteSkillIds: string[]
   allSubcategories: TSubcategory[]
   allSkills: TSkill[]
 }
@@ -179,8 +179,8 @@ export const UserList = ({
   currentUserId,
 }: {
   variant?: 'homepage' | 'skillpage' | 'favoritpage'
-  currentCategoryId?: number
-  currentUserId?: number
+  currentCategoryId?: string
+  currentUserId?: string
 }) => {
   // Состояния для отображения
   const [showAllPopular, toggleShowAllPopular] = useState(false)

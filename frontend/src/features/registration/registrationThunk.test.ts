@@ -15,12 +15,12 @@ describe('Тест completeRegistration', () => {
       password: 'SkillSwap47!',
       about:
         'Пишу фронтенд, люблю свою работу, но чувствую, что упираюсь в языковой барьер. Хочу свободнее общаться и не бояться выступать перед людьми, делиться опытом и идеями.',
-      subcategoriesWanted: [17, 6, 24],
+      subcategoriesWanted: ['17', '6', '24'],
       avatarUrl: '/images/users/8.png',
     }
     const draftSkill: Partial<TSkill> = {
-      categoryId: 1,
-      subcategoryId: 4,
+      categoryId: '1',
+      subcategoryId: '4',
       title: 'Спокойный личный бренд',
       description:
         'Я не кричу о себе — я просто делаю, и люди сами начинают замечать. Покажу, как выстраивать образ без показухи, через реальные действия, опыт и уверенность в том, что ты делаешь.',
@@ -38,7 +38,7 @@ describe('Тест completeRegistration', () => {
     expect(state.user.profileUser).toMatchObject(draftUser)
     expect(state.skill.profileSkill).toMatchObject(draftSkill)
     expect(state.user.profileUser?.id).toBeDefined()
-    expect(state.user.profileUser?.skillOfferedId).not.toBe(0)
+    expect(state.user.profileUser?.skillOfferedId).not.toBe('')
     expect(state.user.profileUser?.skillOfferedId).toBe(state.skill.profileSkill?.id)
     expect(state.skill.profileSkill?.id).toBeDefined()
     expect(state.skill.profileSkill?.userId).toBe(state.user.profileUser?.id)
