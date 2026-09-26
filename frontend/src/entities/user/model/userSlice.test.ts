@@ -48,7 +48,7 @@ describe('Проверяем работу userSlice', () => {
     ...testUser,
     id: String(Date.now()),
     skillOfferedId: '',
-    favoritesSkills: [],
+    favoritesUserId: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -61,7 +61,7 @@ describe('Проверяем работу userSlice', () => {
 
   const updatedWithFavorite: TUser = {
     ...existingTestUser,
-    favoritesSkills: ['14'],
+    favoritesUserId: ['14'],
   }
 
   const testListUsers: TUser[] = [
@@ -77,7 +77,7 @@ describe('Проверяем работу userSlice', () => {
         'Запустил небольшой онлайн-проект, учусь на ходу и часто делаю ошибки. Хочется больше понимания в том, как всё выстроить грамотно и не терять деньги на простых вещах.',
       skillOfferedId: '11',
       subcategoriesWanted: ['8', '31', '1', '3'],
-      favoritesSkills: ['9', '16', '21', '22', '35'],
+      favoritesUserId: ['9', '16', '21', '22', '35'],
       createdAt: '2025-01-18T08:20:00Z',
       updatedAt: '2026-01-18T08:20:00Z',
       avatarUrl: '/images/users/11.png',
@@ -93,7 +93,7 @@ describe('Проверяем работу userSlice', () => {
       about: 'Люблю порядок и чёткие правила. Хаос раздражает больше, чем должен.',
       skillOfferedId: '12',
       subcategoriesWanted: ['30', '6'],
-      favoritesSkills: ['2', '4', '24', '25', '41'],
+      favoritesUserId: ['2', '4', '24', '25', '41'],
       createdAt: '2026-01-08T10:00:00Z',
       updatedAt: '2026-01-08T11:00:00Z',
       avatarUrl: '/images/users/12.png',
@@ -109,7 +109,7 @@ describe('Проверяем работу userSlice', () => {
       about: 'Чувствую, что нужно что-то менять, даже если не до конца понимаю что именно.',
       skillOfferedId: '13',
       subcategoriesWanted: ['24', '42'],
-      favoritesSkills: ['4', '9', '16', '22', '35'],
+      favoritesUserId: ['4', '9', '16', '22', '35'],
       createdAt: '2026-01-09T10:00:00Z',
       updatedAt: '2026-01-09T11:00:00Z',
       avatarUrl: '/images/users/13.png',
@@ -174,7 +174,7 @@ describe('Проверяем работу userSlice', () => {
   const stateToggleFavoriteFulfilled = {
     ...initialState,
     isLoadingFavorite: false,
-    profileUser: { ...existingTestUser, favoritesSkills: ['14'] },
+    profileUser: { ...existingTestUser, favoritesUserId: ['14'] },
   }
 
   describe('getAllUsers', () => {
@@ -379,7 +379,10 @@ describe('Проверяем работу userSlice', () => {
     })
 
     test('проверяем работу rejected fallback', () => {
-      const newStateRejected = userSlice(initialState, toggleFavorite.rejected(new Error(), '', '14'))
+      const newStateRejected = userSlice(
+        initialState,
+        toggleFavorite.rejected(new Error(), '', '14'),
+      )
       expect(newStateRejected.errorFavorite).toBe('Не удалось добавить в избранное')
       expect(newStateRejected.isLoadingFavorite).toBe(false)
     })

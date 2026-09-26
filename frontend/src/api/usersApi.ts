@@ -36,7 +36,7 @@ const mapUser = (user: TBackendUser): TUser => ({
   avatarUrl: user.avatar ?? '',
   skillOfferedId: user.skills?.[0]?.id ?? '',
   subcategoriesWanted: (user.wantToLearn ?? []).map((c) => c.id),
-  favoritesSkills: [],
+  favoritesUserId: [],
   createdAt: undefined,
 })
 
@@ -53,7 +53,7 @@ export const registerUserApi = async (data: TRegisterData): Promise<TUser> => {
     ...data,
     id: String(Date.now()),
     subcategoriesWanted: data.subcategoriesWanted,
-    favoritesSkills: [],
+    favoritesUserId: [],
     skillOfferedId: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -78,7 +78,7 @@ export const toggleFavoriteApi = async (favoriteId: string): Promise<TUser> => {
 
   const user: TUser = JSON.parse(existingUser)
 
-  const favorites = user.favoritesSkills || []
+  const favorites = user.favoritesUserId || []
   const isFavorite = favorites.includes(favoriteId)
 
   const updatedFavorites = isFavorite
@@ -86,7 +86,7 @@ export const toggleFavoriteApi = async (favoriteId: string): Promise<TUser> => {
     : [...favorites, favoriteId]
 
   return patchToStorage<TUser>('draftUser', {
-    favoritesSkills: updatedFavorites,
+    favoritesUserId: updatedFavorites,
     updatedAt: new Date().toISOString(),
   })
 }
