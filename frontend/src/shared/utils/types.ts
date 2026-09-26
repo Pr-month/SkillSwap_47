@@ -54,9 +54,7 @@ export type TSubcategory = {
 }
 
 /** Плоский список подкатегорий из дерева GET /api/categories */
-export const flattenCategoriesToSubcategories = (
-  categories: TCategory[],
-): TSubcategory[] =>
+export const flattenCategoriesToSubcategories = (categories: TCategory[]): TSubcategory[] =>
   categories.flatMap((category) =>
     (category.children ?? []).map((child) => ({
       id: child.id,

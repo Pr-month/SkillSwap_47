@@ -145,7 +145,9 @@ export const FavoritesLayout = ({
   allSubcategories,
   allSkills,
 }: FavoritesLayoutProps) => {
-  const favoriteUsers = allUsers.filter((user) => favoriteUserIds.some(favId => String(favId) === String(user.id)))
+  const favoriteUsers = allUsers.filter((user) =>
+    favoriteUserIds.some((favId) => String(favId) === String(user.id)),
+  )
   const { visibleCount, loadMore, hasMore } = useInfiniteVisibleCount(
     favoriteUsers.length,
     'favorites',

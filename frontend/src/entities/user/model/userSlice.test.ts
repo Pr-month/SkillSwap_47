@@ -379,7 +379,10 @@ describe('Проверяем работу userSlice', () => {
     })
 
     test('проверяем работу rejected fallback', () => {
-      const newStateRejected = userSlice(initialState, toggleFavorite.rejected(new Error(), '', '14'))
+      const newStateRejected = userSlice(
+        initialState,
+        toggleFavorite.rejected(new Error(), '', '14'),
+      )
       expect(newStateRejected.errorFavorite).toBe('Не удалось добавить в избранное')
       expect(newStateRejected.isLoadingFavorite).toBe(false)
     })
