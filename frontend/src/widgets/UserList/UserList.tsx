@@ -134,18 +134,20 @@ export const SkillLayout = ({
 
 interface FavoritesLayoutProps {
   allUsers: TUser[]
-  favoriteSkillIds: string[]
+  favoriteUserIds: string[]
   allSubcategories: TSubcategory[]
   allSkills: TSkill[]
 }
 
 export const FavoritesLayout = ({
   allUsers,
-  favoriteSkillIds,
+  favoriteUserIds,
   allSubcategories,
   allSkills,
 }: FavoritesLayoutProps) => {
-  const favoriteUsers = allUsers.filter((user) => favoriteSkillIds.includes(user.skillOfferedId))
+  const favoriteUsers = allUsers.filter((user) =>
+    favoriteUserIds.some((favId) => String(favId) === String(user.id)),
+  )
   const { visibleCount, loadMore, hasMore } = useInfiniteVisibleCount(
     favoriteUsers.length,
     'favorites',
@@ -212,7 +214,7 @@ export const UserList = ({
   const filteredPlusNewUsers = useAppSelector((state) => selectNewUsers(state, filteredUsers))
   const displayedUsers = isNewFirst ? filteredUsers : filteredPlusNewUsers
   //
-  const favoriteSkillIds = useAppSelector((state) => state.user.profileUser?.favoritesSkills || [])
+  const favoriteUserIds = useAppSelector((state) => state.user.profileUser?.favoritesUserId || [])
   // Для стабильности работы
   const filtersActive = isFiltersActive(filters)
 
@@ -257,7 +259,7 @@ export const UserList = ({
         allUsers={allUsers}
         allSkills={allSkills}
         allSubcategories={allSubcategories}
-        favoriteSkillIds={favoriteSkillIds}
+        favoriteUserIds={favoriteUserIds}
       />
     )
   }
