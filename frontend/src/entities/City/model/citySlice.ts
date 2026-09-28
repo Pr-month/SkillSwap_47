@@ -4,15 +4,15 @@ import { getCitiesApi } from '../../../api/citiesApi'
 import type { TCity } from '../../../shared/utils/types'
 
 export type CityState = {
-    allCity: TCity[]
-    isLoadingCities: boolean
-    errorCities: string | null
+  allCity: TCity[]
+  isLoadingCities: boolean
+  errorCities: string | null
 }
 
 const initialState: CityState = {
   allCity: [],
   isLoadingCities: false,
-  errorCities: null
+  errorCities: null,
 }
 
 export const getAllCities = createAsyncThunk<TCity[]>('city/getAllCities', async () => {
@@ -22,23 +22,22 @@ export const getAllCities = createAsyncThunk<TCity[]>('city/getAllCities', async
 
 const citySlice = createSlice({
   name: 'city',
-  initialState, 
-  reducers: {}, 
+  initialState,
+  reducers: {},
   extraReducers: (builder) => {
-    
     builder
-    .addCase(getAllCities.pending, (state) => {
+      .addCase(getAllCities.pending, (state) => {
         state.isLoadingCities = true
         state.errorCities = null
-    })
-    .addCase(getAllCities.fulfilled, (state, action) => {
+      })
+      .addCase(getAllCities.fulfilled, (state, action) => {
         state.allCity = action.payload
         state.isLoadingCities = false
-    })
-    .addCase(getAllCities.rejected, (state, action) => {
+      })
+      .addCase(getAllCities.rejected, (state, action) => {
         state.errorCities = action.error.message || 'Не удалось загрузить города'
         state.isLoadingCities = false
-    })
+      })
   },
 })
 

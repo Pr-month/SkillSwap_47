@@ -23,7 +23,6 @@ import styles from './ProfilePage.module.css'
 import { Button } from '../../shared/ui/Button'
 import { EditAvatar } from '../../shared/ui/EditAvatar'
 
-
 const ProfilePage = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
