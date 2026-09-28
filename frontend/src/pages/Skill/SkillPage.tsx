@@ -20,11 +20,11 @@ import clsx from 'clsx'
 const FALLBACK_IMAGE = '/placeholder.svg'
 
 const getSafeSubcategories = (
-  wantedIds: number[] | undefined,
+  wantedIds: string[] | undefined,
   allSubcategories: TSubcategory[],
 ): TSubcategory[] => {
   const selected = (wantedIds || [])
-    .map((id) => allSubcategories.find((sub) => sub.id === String(id)))
+    .map((id) => allSubcategories.find((sub) => sub.id === id))
     .filter((sub): sub is TSubcategory => Boolean(sub))
 
   if (selected.length >= 2) {
@@ -41,10 +41,8 @@ const SkillPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const skillId = Number(id)
-
   const skill = useAppSelector((state) =>
-    state.skill.allSkills.find((currentSkill) => currentSkill.id === skillId),
+    state.skill.allSkills.find((currentSkill) => currentSkill.id === id),
   )
 
   const user = useAppSelector((state) =>
@@ -64,11 +62,9 @@ const SkillPage: React.FC = () => {
   const categoryText = useMemo(() => {
     if (!skill) return ''
 
-    const categoryTitle = allCategories.find(
-      (category) => category.id === String(skill.categoryId),
-    )?.name
+    const categoryTitle = allCategories.find((category) => category.id === skill.categoryId)?.name
     const subcategoryTitle = allSubcategories.find(
-      (subcategory) => subcategory.id === String(skill.subcategoryId),
+      (subcategory) => subcategory.id === skill.subcategoryId,
     )?.name
 
     return [categoryTitle, subcategoryTitle].filter(Boolean).join(' / ')
@@ -78,13 +74,11 @@ const SkillPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const isLikedFromStore =
-    typeof skill?.id === 'number' && !Number.isNaN(skill?.id)
-      ? profileUser?.favoritesSkills?.includes(skill?.id)
-      : false
+  const isLikedFromStore = skill?.id
+    ? (profileUser?.favoritesSkills?.includes(skill.id) ?? false)
+    : false
   const isLiked = uiLiked ?? isLikedFromStore
-  const isForSwap =
-    profileUser && typeof skill?.id === 'number' ? profileSkill?.includes(skill.id) : false
+  const isForSwap = profileUser && skill?.id ? profileSkill?.includes(skill.id) : false
   const localUser = localStorage.getItem('draftUser')
   const localUserId = localUser ? JSON.parse(localUser).id : null
   const isLocalProfileUser = profileUser?.id === localUserId
@@ -96,12 +90,11 @@ const SkillPage: React.FC = () => {
       navigate('/login')
     }
 
-    const id = skill?.id
-
-    if (typeof id !== 'number' || Number.isNaN(id)) return
+    const skillId = skill?.id
+    if (!skillId) return
 
     if (isLocalProfileUser) {
-      dispatch(toggleFavorite(id))
+      dispatch(toggleFavorite(skillId))
       return
     }
 
@@ -145,10 +138,10 @@ const SkillPage: React.FC = () => {
       navigate('/login')
       return
     }
-    const id = skill?.id
-    if (typeof id !== 'number') return
+    const skillId = skill?.id
+    if (!skillId) return
 
-    dispatch(addToSwap(id))
+    dispatch(addToSwap(skillId))
     setIsModalOpen(true)
   }
 

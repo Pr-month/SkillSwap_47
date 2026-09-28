@@ -1,17 +1,49 @@
-import { request } from './base'
+import { fetchAllPages } from './base'
 import { delay } from '../shared/lib/delay'
 import { postToStorage, patchToStorage } from './localStorageApi'
 import type { TUser, TRegisterData } from '../shared/utils/types'
 
-type TUserResponse = {
-  users: TUser[]
+type TBackendCategory = {
+  id: string
+  name?: string
 }
 
-//метод для получения всех пользователей из json
+type TBackendSkillBrief = {
+  id: string
+}
+
+type TBackendUser = {
+  id: string
+  name: string
+  city: string
+  birthdate: string
+  gender?: string
+  email?: string
+  about?: string | null
+  avatar?: string
+  skills?: TBackendSkillBrief[]
+  wantToLearn?: TBackendCategory[]
+}
+
+const mapUser = (user: TBackendUser): TUser => ({
+  id: user.id,
+  name: user.name,
+  city: user.city,
+  birthDate: user.birthdate,
+  gender: user.gender,
+  email: user.email,
+  about: user.about ?? undefined,
+  avatarUrl: user.avatar ?? '',
+  skillOfferedId: user.skills?.[0]?.id ?? '',
+  subcategoriesWanted: (user.wantToLearn ?? []).map((c) => c.id),
+  favoritesSkills: [],
+  createdAt: undefined,
+})
+
+//метод для получения всех пользователей с бэка
 export const getUsersApi = async (): Promise<TUser[]> => {
-  await delay()
-  const data = await request<TUserResponse>('/db/users.json')
-  return data.users
+  const users = await fetchAllPages<TBackendUser>('/api/users')
+  return users.map(mapUser)
 }
 
 //обертка-метод для эмуляции создания нового пользователя(на самом деле записывается в localStorage)
@@ -19,10 +51,10 @@ export const registerUserApi = async (data: TRegisterData): Promise<TUser> => {
   await delay()
   const newUser: TUser = {
     ...data,
-    id: Date.now(),
+    id: String(Date.now()),
     subcategoriesWanted: data.subcategoriesWanted,
     favoritesSkills: [],
-    skillOfferedId: 0,
+    skillOfferedId: '',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
@@ -39,7 +71,7 @@ export const updateUserApi = async (data: Partial<TUser>): Promise<TUser> => {
 }
 
 //метод для добавления/удаления карточки пользователя в избранное(не работает для пользователей из json)
-export const toggleFavoriteApi = async (favoriteId: number): Promise<TUser> => {
+export const toggleFavoriteApi = async (favoriteId: string): Promise<TUser> => {
   await delay(50, 500)
   const existingUser = localStorage.getItem('draftUser')
   if (!existingUser) throw new Error('Пользователь не найден')

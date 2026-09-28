@@ -107,7 +107,7 @@ export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
   return true
 })
 
-export const toggleFavorite = createAsyncThunk<TUser, number>(
+export const toggleFavorite = createAsyncThunk<TUser, string>(
   'user/toggleFavorite',
   async (favoriteId) => {
     const data = await toggleFavoriteApi(favoriteId)

@@ -9,13 +9,14 @@ import { IconButton } from '../../shared/ui/IconButton'
 import { useAppDispatch, useAppSelector } from '../../app/store/store'
 import { toggleFavorite } from '../../entities/user/model/userSlice'
 
-const categoryColors: Record<number, string> = {
-  1: '#EEE7F7',
-  2: '#F7E7F2',
-  3: '#EBE5C5',
-  4: '#E7F2F6',
-  5: '#F7EBE5',
-  6: '#E9F7E7',
+const CATEGORY_PALETTE = ['#EEE7F7', '#F7E7F2', '#EBE5C5', '#E7F2F6', '#F7EBE5', '#E9F7E7']
+
+const colorForId = (id: string): string => {
+  let hash = 0
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash * 31 + id.charCodeAt(i)) | 0
+  }
+  return CATEGORY_PALETTE[Math.abs(hash) % CATEGORY_PALETTE.length]
 }
 
 export interface UserCardProps {
@@ -100,7 +101,7 @@ export const UserCard = ({
             <li
               key={skill.id}
               className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[skill.categoryId] || '#eee' }}
+              style={{ backgroundColor: colorForId(skill.categoryId) }}
             >
               {skill.title}
             </li>
@@ -111,18 +112,18 @@ export const UserCard = ({
           <h4 className={styles.sectionTitle}>Хочет научиться</h4>
           <ul className={styles.skillList}>
             <li
-              key={subcategories[0].id}
+              key={subcategories[0]?.id}
               className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[Number(subcategories[0].categoryId)] || '#eee' }}
+              style={{ backgroundColor: colorForId(subcategories[0]?.categoryId ?? '') }}
             >
-              {subcategories[0].name}
+              {subcategories[0]?.name}
             </li>
             <li
-              key={subcategories[1].id}
+              key={subcategories[1]?.id}
               className={styles.skillTag}
-              style={{ backgroundColor: categoryColors[Number(subcategories[1].categoryId)] || '#eee' }}
+              style={{ backgroundColor: colorForId(subcategories[1]?.categoryId ?? '') }}
             >
-              {subcategories[1].name}
+              {subcategories[1]?.name}
             </li>
             <li>
               {subcategories.length > 2 && (
