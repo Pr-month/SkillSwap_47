@@ -53,6 +53,11 @@ export type TSubcategory = {
   categoryId: string
 }
 
+export type TCity = {
+  id: string //UUID
+  name: string
+}
+
 /** Плоский список подкатегорий из дерева GET /api/categories */
 export const flattenCategoriesToSubcategories = (categories: TCategory[]): TSubcategory[] =>
   categories.flatMap((category) =>

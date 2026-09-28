@@ -22,6 +22,7 @@ import step2Illustration from '../../../shared/assets/svg/step2-illustration.svg
 import authStyles from '../Auth.module.css'
 import { getAuthStepTitleId } from '../authStepIds'
 import { RegistrationStepHeader } from '../RegistrationStepHeader'
+import { selectCityNames } from '../../../entities/City/model/selectors'
 
 type Step2FormData = yup.InferType<typeof step2Schema>
 
@@ -30,17 +31,13 @@ const AuthStepSecondPage: React.FC = () => {
   const navigate = useNavigate()
 
   // Данные из стора
-  const { draftUser, allUsers } = useAppSelector((state) => state.user)
+  const cities = useAppSelector(selectCityNames)
+  const { draftUser } = useAppSelector((state) => state.user)
   const {
     allCategories: categories,
     allSubcategories: subcategories,
     isLoading,
   } = useAppSelector((state) => state.skill)
-
-  const cities = useMemo(
-    () => Array.from(new Set(allUsers?.map((user) => user.city))).filter(Boolean) as string[],
-    [allUsers],
-  )
 
   // Настройка формы
   const {

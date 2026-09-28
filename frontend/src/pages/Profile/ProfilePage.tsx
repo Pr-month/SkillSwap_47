@@ -5,6 +5,8 @@ import { updateUser } from '../../entities/user/model/userSlice'
 import { getStep1Schema } from '../../shared/lib/validation'
 import { ValidationError } from 'yup'
 
+import { selectCityNames } from '../../entities/City/model/selectors'
+
 import { SelectSearch } from '../../shared/ui/SelectSearch/SelectSearch'
 import { TextAreaInput } from '../../shared/ui/TextInput/TextInput/TextAreaInput'
 import { DataInput } from '../../shared/ui/DataInput/DataInput'
@@ -21,14 +23,15 @@ import styles from './ProfilePage.module.css'
 import { Button } from '../../shared/ui/Button'
 import { EditAvatar } from '../../shared/ui/EditAvatar'
 
+
 const ProfilePage = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const dispatch = useAppDispatch()
-
   const isLoading = useAppSelector((state) => state.user.isLoadingUpdate)
   const users = useAppSelector((state) => state.user.allUsers)
   const user = useAppSelector((state) => state.user.profileUser)
+  const cities = useAppSelector(selectCityNames)
   const [emailError, setEmailError] = useState<string | undefined>(undefined)
 
   const safe = (v: unknown) => (typeof v === 'string' ? v : '')
@@ -42,12 +45,6 @@ const ProfilePage = () => {
     about: safe(user?.about),
     avatarUrl: safe(user?.avatarUrl),
   })
-
-  // Для автокомплита города, searchInput и textInput не поддерживают список вариантов городов
-  const cities = useMemo(
-    () => Array.from(new Set(users.map((user) => user.city))).filter(Boolean),
-    [users],
-  )
 
   const otherEmails = useMemo(() => {
     if (!user) return []
