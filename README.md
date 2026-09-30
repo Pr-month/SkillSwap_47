@@ -17,11 +17,13 @@ NODE_ENV=test npm run migration:run
 `migration:generate` / `migration:revert` — те же скрипты в `backend/package.json`.
 ## Docker
 
-Поднять Postgres и API:
+Поднять Postgres, API и фронтенд:
 
 ```bash
 docker compose up --build
 ```
+
+Фронтенд: `http://localhost:5173`.
 
 Swagger: `http://localhost:3000/api/docs`.
 
