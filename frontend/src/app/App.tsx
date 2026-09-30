@@ -5,6 +5,7 @@ import '../shared/assets/fonts/fonts.css'
 import { getAllSkills, getAllCategories } from '../entities/Skill/model/skillSlice'
 import { getAllUsers } from '../entities/user/model/userSlice'
 import { useAppDispatch } from './store/store'
+import { getAllCities } from '../entities/City/model/CitySlice'
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -14,6 +15,7 @@ const App: React.FC = () => {
       await dispatch(getAllSkills())
       await dispatch(getAllCategories())
       await dispatch(getAllUsers())
+      await dispatch(getAllCities())
     }
     init()
   }, [dispatch])
