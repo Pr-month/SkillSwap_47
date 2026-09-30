@@ -14,6 +14,7 @@ import { UserGender } from '../common/enums/user-gender.enum';
 import { Roles } from '../common/enums/user-role.enum';
 import { appConfig } from '../config/app.config';
 import { jwtConfig } from '../config/jwt.config';
+import { MailService } from '../mail/mail.service';
 import { User } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { AuthService } from './auth.service';
@@ -36,6 +37,7 @@ describe('AuthService', () => {
   let assertSubcategory: jest.Mock;
   let signAsync: jest.Mock;
   let transaction: jest.Mock;
+  let sendUserNotification: jest.Mock;
 
   const bcryptCompare = bcrypt.compare as jest.Mock;
   const bcryptHash = bcrypt.hash as jest.Mock;
@@ -89,6 +91,7 @@ describe('AuthService', () => {
     updateRefreshToken = jest.fn();
     findByName = jest.fn();
     assertSubcategory = jest.fn();
+    sendUserNotification = jest.fn().mockResolvedValue(undefined);
     signAsync = jest.fn((_payload, options: { secret: string }) =>
       Promise.resolve(
         options.secret === 'access' ? 'access-token' : 'refresh-token',
@@ -114,6 +117,10 @@ describe('AuthService', () => {
           useValue: { findOne, update },
         },
         { provide: JwtService, useValue: { signAsync } },
+        {
+          provide: MailService,
+          useValue: { sendUserNotification },
+        },
         { provide: appConfig.KEY, useValue: { saltRounds: 10 } },
         {
           provide: jwtConfig.KEY,
@@ -289,6 +296,10 @@ describe('AuthService', () => {
     expect(assertSubcategory).toHaveBeenNthCalledWith(1, 'cat-1', 'sub-1');
     expect(assertSubcategory).toHaveBeenNthCalledWith(2, 'cat-2', 'sub-2');
     expect(updateRefreshToken).toHaveBeenCalledWith('user-1', 'hashed-value');
+    expect(sendUserNotification).toHaveBeenCalledWith('alex@mail.com', {
+      subject: 'Регистрация на SkillSwap',
+      text: 'Здравствуйте, Алексей! Вы успешно зарегистрировались на SkillSwap.',
+    });
     expect(result).toEqual({
       user: {
         id: 'user-1',
