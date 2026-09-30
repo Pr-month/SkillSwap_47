@@ -40,13 +40,9 @@ export const selectFilteredUsers = createSelector(
           //при all не работала сортировка вообще, исправлено
           if (filters.selectedSubcategoryIds.length > 0) {
             const selected = new Set(filters.selectedSubcategoryIds)
-            const canTeach = usersSkills.some((skill) =>
-              selected.has(String(skill.subcategoryId)),
-            )
+            const canTeach = usersSkills.some((skill) => selected.has(String(skill.subcategoryId)))
 
-            const wantLearn = user.subcategoriesWanted.some((subId) =>
-              selected.has(String(subId)),
-            )
+            const wantLearn = user.subcategoriesWanted.some((subId) => selected.has(String(subId)))
 
             if (filters.skillsType === 'canTeach' && !canTeach) return false
             if (filters.skillsType === 'wantToLearn' && !wantLearn) return false
@@ -74,8 +70,8 @@ export const selectFilteredUsers = createSelector(
 )
 
 export const selectPopularUsers = createSelector([selectUsers], (users) => {
-  const allFavorites: number[] = users.flatMap((user) => user.favoritesSkills ?? [])
-  const skillCountMap: Record<number, number> = {}
+  const allFavorites: string[] = users.flatMap((user) => user.favoritesUserId ?? [])
+  const skillCountMap: Record<string, number> = {}
   allFavorites.forEach((skillId) => {
     skillCountMap[skillId] = (skillCountMap[skillId] || 0) + 1
   })
@@ -88,7 +84,7 @@ export const selectPopularUsers = createSelector([selectUsers], (users) => {
       return bScore - aScore
     }
 
-    //если одинаковое между двумя - по алфавиту
+    //без favorites (findAll бэка) — по имени
     return a.name.localeCompare(b.name, undefined, {
       sensitivity: 'base',
     })

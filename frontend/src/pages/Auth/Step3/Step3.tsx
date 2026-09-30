@@ -125,12 +125,12 @@ const AuthStepThirdPage: React.FC = () => {
                 if (cat) {
                   const newCatId = String(cat.id)
                   setValue('categoryId', newCatId, { shouldValidate: true })
-                  dispatch(updateDraftSkill({ categoryId: Number(newCatId) }))
+                  dispatch(updateDraftSkill({ categoryId: newCatId }))
 
                   // Очистка подкатегории, если она не подходит
                   if (currentSubcategory && String(currentSubcategory.categoryId) !== newCatId) {
                     setValue('subcategoryId', '', { shouldValidate: true })
-                    dispatch(updateDraftSkill({ subcategoryId: 0 }))
+                    dispatch(updateDraftSkill({ subcategoryId: '' }))
                   }
                 }
               }}
@@ -147,13 +147,13 @@ const AuthStepThirdPage: React.FC = () => {
                 if (sub) {
                   const newSubId = String(sub.id)
                   setValue('subcategoryId', newSubId, { shouldValidate: true })
-                  dispatch(updateDraftSkill({ subcategoryId: Number(newSubId) }))
+                  dispatch(updateDraftSkill({ subcategoryId: newSubId }))
 
                   // Авто-выбор категории
                   const parentCatId = String(sub.categoryId)
                   if (categoryIdValue !== parentCatId) {
                     setValue('categoryId', parentCatId, { shouldValidate: true })
-                    dispatch(updateDraftSkill({ categoryId: Number(parentCatId) }))
+                    dispatch(updateDraftSkill({ categoryId: parentCatId }))
                   }
                 }
               }}

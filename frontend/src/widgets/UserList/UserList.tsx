@@ -16,10 +16,10 @@ import type { TSkill, TUser, TSubcategory } from '../../shared/utils/types'
 
 const PAGE_SIZE = 20
 const DEFAULT_SKILL: TSkill = {
-  id: 0,
-  categoryId: 0,
-  subcategoryId: 0,
-  userId: 0,
+  id: '',
+  categoryId: '',
+  subcategoryId: '',
+  userId: '',
   title: 'Навыки не указаны',
   description: 'Пользователь еще не заполнил информацию о своих услугах',
   imagesUrl: [],
@@ -76,8 +76,8 @@ function InfiniteScrollSentinel({
 }
 
 interface SkillLayoutProps {
-  currentCategoryId?: number
-  currentUserId?: number
+  currentCategoryId?: string
+  currentUserId?: string
   allUsers: TUser[]
   allSkills: TSkill[]
   allSubcategories: TSubcategory[]
@@ -134,18 +134,20 @@ export const SkillLayout = ({
 
 interface FavoritesLayoutProps {
   allUsers: TUser[]
-  favoriteSkillIds: number[]
+  favoriteUserIds: string[]
   allSubcategories: TSubcategory[]
   allSkills: TSkill[]
 }
 
 export const FavoritesLayout = ({
   allUsers,
-  favoriteSkillIds,
+  favoriteUserIds,
   allSubcategories,
   allSkills,
 }: FavoritesLayoutProps) => {
-  const favoriteUsers = allUsers.filter((user) => favoriteSkillIds.includes(user.skillOfferedId))
+  const favoriteUsers = allUsers.filter((user) =>
+    favoriteUserIds.some((favId) => String(favId) === String(user.id)),
+  )
   const { visibleCount, loadMore, hasMore } = useInfiniteVisibleCount(
     favoriteUsers.length,
     'favorites',
@@ -179,8 +181,8 @@ export const UserList = ({
   currentUserId,
 }: {
   variant?: 'homepage' | 'skillpage' | 'favoritpage'
-  currentCategoryId?: number
-  currentUserId?: number
+  currentCategoryId?: string
+  currentUserId?: string
 }) => {
   // Состояния для отображения
   const [showAllPopular, toggleShowAllPopular] = useState(false)
@@ -212,7 +214,7 @@ export const UserList = ({
   const filteredPlusNewUsers = useAppSelector((state) => selectNewUsers(state, filteredUsers))
   const displayedUsers = isNewFirst ? filteredUsers : filteredPlusNewUsers
   //
-  const favoriteSkillIds = useAppSelector((state) => state.user.profileUser?.favoritesSkills || [])
+  const favoriteUserIds = useAppSelector((state) => state.user.profileUser?.favoritesUserId || [])
   // Для стабильности работы
   const filtersActive = isFiltersActive(filters)
 
@@ -257,7 +259,7 @@ export const UserList = ({
         allUsers={allUsers}
         allSkills={allSkills}
         allSubcategories={allSubcategories}
-        favoriteSkillIds={favoriteSkillIds}
+        favoriteUserIds={favoriteUserIds}
       />
     )
   }

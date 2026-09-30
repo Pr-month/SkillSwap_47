@@ -252,7 +252,7 @@ const AuthStepSecondPage: React.FC = () => {
                       if (sub) {
                         const newSubId = String(sub.id)
                         field.onChange(newSubId)
-                        dispatch(updateDraftUser({ subcategoriesWanted: [Number(newSubId)] }))
+                        dispatch(updateDraftUser({ subcategoriesWanted: [newSubId] }))
 
                         // Если выбрали подкатегорию — автоматически проставляем её родительскую категорию
                         const parentCatId = String(sub.categoryId)
