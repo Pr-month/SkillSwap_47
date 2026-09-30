@@ -16,6 +16,8 @@ import { RolesGuard } from './guards/roles.guard';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
+import { YandexStrategy } from './strategies/yandex.strategy';
+import { YandexAuthGuard } from './guards/yandex-auth.guard';
 
 @Module({
   imports: [
@@ -43,6 +45,8 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
     RefreshTokenStrategy,
     RefreshTokenGuard,
     RolesGuard,
+    YandexStrategy,
+    YandexAuthGuard,
   ],
   exports: [JwtModule, JwtAuthGuard, RefreshTokenGuard, RolesGuard],
 })
