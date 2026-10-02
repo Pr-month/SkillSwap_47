@@ -5,10 +5,52 @@ type RequestOptions = {
   body?: unknown
 }
 
-export const request = async <T>(
-  url: string,
-  options?: RequestOptions,
-): Promise<T> => {
+export type BackendErrorMessage = string | string[]
+
+export class RequestError extends Error {
+  readonly status: number | null
+  readonly backendMessage: BackendErrorMessage
+  readonly cause?: unknown
+
+  constructor(status: number | null, backendMessage: BackendErrorMessage, cause?: unknown) {
+    const message = Array.isArray(backendMessage) ? backendMessage.join(', ') : backendMessage
+    super(message)
+    this.name = 'RequestError'
+    this.status = status
+    this.backendMessage = backendMessage
+    this.cause = cause
+  }
+}
+
+const isBackendErrorMessage = (value: unknown): value is BackendErrorMessage =>
+  typeof value === 'string' ||
+  (Array.isArray(value) && value.every((item) => typeof item === 'string'))
+
+const getErrorMessage = (text: string, status: number): BackendErrorMessage => {
+  const trimmedText = text.trim()
+
+  if (!trimmedText) {
+    return `Ошибка запроса: ${status}`
+  }
+
+  try {
+    const payload = JSON.parse(trimmedText) as {
+      message?: unknown
+      error?: { message?: unknown }
+    }
+    const backendMessage = payload.error?.message ?? payload.message
+
+    if (isBackendErrorMessage(backendMessage)) {
+      return backendMessage
+    }
+  } catch {
+    // Ответ с ошибкой может быть обычным текстом, а не JSON.
+  }
+
+  return trimmedText
+}
+
+export const request = async <T>(url: string, options?: RequestOptions): Promise<T> => {
   const method = options?.method ?? 'GET'
   const headers: Record<string, string> = {}
   let body: string | undefined
@@ -18,12 +60,24 @@ export const request = async <T>(
     body = JSON.stringify(options.body)
   }
 
-  const result = await fetch(url, { method, headers, body })
-  if (!result.ok) {
-    throw new Error(`Ошибка: ${result.status}`)
+  let result: Response
+
+  try {
+    result = await fetch(url, { method, headers, body })
+  } catch (error) {
+    throw new RequestError(
+      null,
+      'Не удалось выполнить запрос. Проверьте подключение к сети.',
+      error,
+    )
   }
 
   const text = await result.text()
+
+  if (!result.ok) {
+    throw new RequestError(result.status, getErrorMessage(text, result.status))
+  }
+
   if (!text.trim()) {
     return undefined as T
   }
