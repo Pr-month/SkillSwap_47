@@ -1,11 +1,33 @@
 //база для основных fetch из json/api
 
-export const request = async <T>(url: string): Promise<T> => {
-  const result = await fetch(url)
+type RequestOptions = {
+  method?: string
+  body?: unknown
+}
+
+export const request = async <T>(
+  url: string,
+  options?: RequestOptions,
+): Promise<T> => {
+  const method = options?.method ?? 'GET'
+  const headers: Record<string, string> = {}
+  let body: string | undefined
+
+  if (options?.body !== undefined) {
+    headers['Content-Type'] = 'application/json'
+    body = JSON.stringify(options.body)
+  }
+
+  const result = await fetch(url, { method, headers, body })
   if (!result.ok) {
     throw new Error(`Ошибка: ${result.status}`)
   }
-  return result.json()
+
+  const text = await result.text()
+  if (!text.trim()) {
+    return undefined as T
+  }
+  return JSON.parse(text) as T
 }
 
 export type TPage<T> = {
