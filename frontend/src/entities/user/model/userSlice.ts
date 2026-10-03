@@ -1,4 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+import { loginApi, type TLoginUser } from '../../../api/authApi'
+import { setAuthTokens } from '../../../api/authTokenStorage'
 import {
   getUsersApi,
   registerUserApi,
@@ -8,22 +10,20 @@ import {
 import type { TUser, TRegisterData } from '../../../shared/utils/types'
 import { delay } from '../../../shared/lib/delay'
 
-//Флоу данных для пользователей на главной странице:
-//Компонент UserList получает из стора данные(использует useAppSelector)(можно пока что для визуализации брать всех юзеров
-//потом будете брать уже отфильтрованных)
-//записывает их в переменную. Возвращает что-то типо следующего:
-// users.map((elem,key)=> {
-//<li key={key}>
-// <UserCard user={elem}/>
-// </li>
-//})
+const mapLoginUserToProfile = (user: TLoginUser): TUser => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  city: '',
+  birthDate: '',
+  skillOfferedId: '',
+  subcategoriesWanted: [],
+  avatarUrl: '',
+})
 
 export type userState = {
   allUsers: TUser[]
-  //это поле поможет вам собрать все данные по регистрации
-  //получить их через useAppSelector и передать в registerUser
   draftUser: Partial<TRegisterData>
-  //получаем его, чтобы заполнять автоматически данные в профиле
   profileUser: TUser | null
   isLoadingUsers: boolean
   isLoadingRegister: boolean
@@ -57,7 +57,6 @@ export const initialState: userState = {
   errorFavorite: null,
 }
 
-//обязательно запускается при инициализации приложения!!!
 export const getAllUsers = createAsyncThunk<TUser[]>('user/getAllUsers', async () => {
   const data = await getUsersApi()
   return data
@@ -71,8 +70,6 @@ export const registerUser = createAsyncThunk<TUser, TRegisterData>(
   },
 )
 
-//вызывать при изменении полей на странице профиля(не регистрации)
-//пример, изменение имени в профиле: dispatch(updateUser({ name: `${что пользователь ввел}` }))
 export const updateUser = createAsyncThunk<TUser, Partial<TUser>>(
   'user/updateUser',
   async (userData) => {
@@ -81,26 +78,17 @@ export const updateUser = createAsyncThunk<TUser, Partial<TUser>>(
   },
 )
 
-export const loginUser = createAsyncThunk<
-  TUser,
-  { email: string; password: string },
-  { state: { user: userState } }
->('user/loginUser', async ({ email, password }, { getState }) => {
-  await delay()
-  const { allUsers } = getState().user
-
-  const storeUser = allUsers.find((user) => user.email === email && user.password === password)
-  if (storeUser) return storeUser
-
-  const localUser = localStorage.getItem('draftUser')
-  if (localUser) {
-    const user: TUser = JSON.parse(localUser)
-    if (user.email === email && user.password === password) {
-      return user
-    }
-  }
-  throw new Error('Пользователь не найден')
-})
+export const loginUser = createAsyncThunk<TUser, { email: string; password: string }>(
+  'user/loginUser',
+  async ({ email, password }) => {
+    const response = await loginApi(email, password)
+    setAuthTokens({
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    })
+    return mapLoginUserToProfile(response.user)
+  },
+)
 
 export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
   await delay()
@@ -119,11 +107,9 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    //вызывать при заполнении любого окошка формы регистрации(если это не записывать в стор, состояние между шагами не сохранится)
     updateDraftUser(state, action: PayloadAction<Partial<TRegisterData>>) {
       state.draftUser = { ...state.draftUser, ...action.payload }
     },
-    //вызывается при завершении регистрации успешно (все три шага)
     resetDraftUser(state) {
       state.draftUser = {}
     },
