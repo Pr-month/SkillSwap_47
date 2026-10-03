@@ -4,6 +4,14 @@ import { createSkill } from '../../entities/Skill/model/skillSlice'
 import type { RootState } from '../../app/store/store'
 import type { TUser, TSkill, TRegisterData } from '../../shared/utils/types'
 
+export { buildRegisterDto } from './buildRegisterDto'
+export type {
+  TRegisterDto,
+  TRegisterDraftUser,
+  TRegisterSkillDto,
+  TRegisterWantToLearn,
+} from './buildRegisterDto'
+
 //вызфваем так dispatch(completeRegistration()) - даже ничего внутрь передавать не надо, thunk сделает все за вас,
 //  главное - записывать в стор draftUser и draftSkill
 export const completeRegistration = createAsyncThunk<
