@@ -63,4 +63,23 @@ describe('request', () => {
       message: 'Не удалось выполнить запрос. Проверьте подключение к сети.',
     } satisfies Partial<RequestError>)
   })
+
+  it('отправляет FormData без Content-Type', async () => {
+    const formData = new FormData()
+    formData.append('file', new File(['png'], 'sample.png', { type: 'image/png' }))
+    fetchMock.mockResolvedValue(createResponse(201, JSON.stringify({ url: '/uploads/sample.png' })))
+
+    await expect(
+      request('/api/upload', {
+        method: 'POST',
+        body: formData,
+      }),
+    ).resolves.toEqual({ url: '/uploads/sample.png' })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/upload', {
+      method: 'POST',
+      headers: {},
+      body: formData,
+    })
+  })
 })
