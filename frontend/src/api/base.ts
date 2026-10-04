@@ -53,11 +53,16 @@ const getErrorMessage = (text: string, status: number): BackendErrorMessage => {
 export const request = async <T>(url: string, options?: RequestOptions): Promise<T> => {
   const method = options?.method ?? 'GET'
   const headers: Record<string, string> = {}
-  let body: string | undefined
+  let body: BodyInit | undefined
 
   if (options?.body !== undefined) {
-    headers['Content-Type'] = 'application/json'
-    body = JSON.stringify(options.body)
+    if (options.body instanceof FormData) {
+      body = options.body
+      // Content-Type не задаём — boundary выставит браузер/fetch
+    } else {
+      headers['Content-Type'] = 'application/json'
+      body = JSON.stringify(options.body)
+    }
   }
 
   let result: Response
