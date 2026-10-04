@@ -1,4 +1,5 @@
-import { request } from './base'
+import { getAuthTokens, setAuthTokens } from './authTokenStorage'
+import { request, RequestError } from './base'
 
 export type TAuthRole = 'USER' | 'ADMIN'
 
@@ -16,8 +17,32 @@ export type TLoginResponse = {
   refreshToken: string
 }
 
+export type TRefreshResponse = {
+  accessToken: string
+  refreshToken: string
+}
+
 export const loginApi = (email: string, password: string): Promise<TLoginResponse> =>
   request<TLoginResponse>('/api/auth/login', {
     method: 'POST',
     body: { email, password },
   })
+
+export const refreshApi = async (refreshToken?: string): Promise<TRefreshResponse> => {
+  const token = refreshToken ?? getAuthTokens()?.refreshToken
+  if (!token) {
+    throw new RequestError(null, 'Нет refresh токена')
+  }
+
+  const tokens = await request<TRefreshResponse>('/api/auth/refresh', {
+    method: 'POST',
+    body: { refreshToken: token },
+  })
+
+  setAuthTokens({
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+  })
+
+  return tokens
+}
