@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAppSelector } from '../../app/store/store'
-import type { TSubcategory } from '../../shared/utils/types'
+import type { TSkill, TSubcategory, TUser } from '../../shared/utils/types'
 import { Button } from '../../shared/ui/Button'
 import { IconButton } from '../../shared/ui/IconButton'
 import { SkillCard } from '../../widgets/SkillCard'
@@ -15,9 +15,13 @@ import moreSquareIcon from '../../shared/assets/icons/more-square.png'
 import { useAppDispatch } from '../../app/store/store'
 import { toggleFavorite } from '../../entities/user/model/userSlice'
 import { addToSwap } from '../../entities/Skill/model/skillSlice'
+import { getSkillByIdApi } from '../../api/skillsApi'
+import { RequestError } from '../../api/base'
 import clsx from 'clsx'
 
 const FALLBACK_IMAGE = '/placeholder.svg'
+
+type TPageStatus = 'loading' | 'ready' | 'notFound' | 'error'
 
 const getSafeSubcategories = (
   wantedIds: string[] | undefined,
@@ -40,19 +44,77 @@ const getSafeSubcategories = (
 const SkillPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
 
-  const skill = useAppSelector((state) =>
-    state.skill.allSkills.find((currentSkill) => currentSkill.id === id),
-  )
-
-  const user = useAppSelector((state) =>
-    state.user.allUsers.find((currentUser) => currentUser.id === skill?.userId),
-  )
+  const [fetchedSkill, setFetchedSkill] = useState<TSkill | null>(null)
+  const [user, setUser] = useState<TUser | null>(null)
+  const [status, setStatus] = useState<TPageStatus>('loading')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const allSubcategories = useAppSelector((state) => state.skill.allSubcategories)
   const allCategories = useAppSelector((state) => state.skill.allCategories)
   const profileUser = useAppSelector((state) => state.user.profileUser)
   const profileSkill = useAppSelector((state) => state.skill.isForSwap)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSkill = async () => {
+      if (!id) {
+        setFetchedSkill(null)
+        setUser(null)
+        setStatus('notFound')
+        setErrorMessage(null)
+        return
+      }
+
+      setStatus('loading')
+      setFetchedSkill(null)
+      setUser(null)
+      setErrorMessage(null)
+
+      try {
+        const { skill: nextSkill, owner } = await getSkillByIdApi(id)
+        if (cancelled) return
+
+        setFetchedSkill(nextSkill)
+        setUser(owner)
+        setStatus('ready')
+      } catch (error) {
+        if (cancelled) return
+
+        if (
+          error instanceof RequestError &&
+          (error.status === 404 || error.status === 400)
+        ) {
+          setStatus('notFound')
+          setErrorMessage(null)
+          return
+        }
+
+        setStatus('error')
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Не удалось загрузить навык. Попробуйте позже.',
+        )
+      }
+    }
+
+    void loadSkill()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  const skill = useMemo(() => {
+    if (!fetchedSkill) return null
+    const parentId = allSubcategories.find(
+      (sub) => sub.id === fetchedSkill.subcategoryId,
+    )?.categoryId
+    return parentId ? { ...fetchedSkill, categoryId: parentId } : fetchedSkill
+  }, [fetchedSkill, allSubcategories])
 
   const userSubcategories = useMemo(
     () => getSafeSubcategories(user?.subcategoriesWanted, allSubcategories),
@@ -71,7 +133,6 @@ const SkillPage: React.FC = () => {
   }, [skill, allCategories, allSubcategories])
 
   const [uiLiked, setUiLiked] = useState<boolean | null>(null)
-  const dispatch = useAppDispatch()
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const isLikedFromStore = user?.id
@@ -102,10 +163,7 @@ const SkillPage: React.FC = () => {
     console.log('like', isLiked, isLocalProfileUser)
   }
 
-  const isLoadingSkill = useAppSelector((state) => state.skill.isLoading)
-  const isLoadingUser = useAppSelector((state) => state.user.isLoadingUsers)
-
-  if (isLoadingSkill || isLoadingUser) {
+  if (status === 'loading') {
     return (
       <section className={styles.page}>
         <div className={styles.notFoundCard}>
@@ -118,13 +176,29 @@ const SkillPage: React.FC = () => {
     )
   }
 
-  if (!skill || !user) {
+  if (status === 'notFound') {
     return (
       <section className={styles.page}>
         <div className={styles.notFoundCard}>
           <h1 className={styles.notFoundTitle}>Навык не найден</h1>
           <p className={styles.notFoundText}>
             Проверьте корректность ссылки или выберите другой навык.
+          </p>
+          <Link to="/">
+            <Button>На главную</Button>
+          </Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (status === 'error' || !skill || !user) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.notFoundCard}>
+          <h1 className={styles.notFoundTitle}>Не удалось загрузить навык</h1>
+          <p className={styles.notFoundText}>
+            {errorMessage ?? 'Проверьте подключение к сети и попробуйте ещё раз.'}
           </p>
           <Link to="/">
             <Button>На главную</Button>
