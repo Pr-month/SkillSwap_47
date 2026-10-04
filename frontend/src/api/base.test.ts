@@ -1,4 +1,5 @@
 import { RequestError, request } from './base'
+import { clearAuthTokens, setAuthTokens } from './authTokenStorage'
 
 const fetchMock = jest.fn()
 
@@ -20,6 +21,7 @@ describe('request', () => {
 
   beforeEach(() => {
     fetchMock.mockReset()
+    clearAuthTokens()
   })
 
   it('сохраняет статус и массив сообщений backend', async () => {
@@ -80,6 +82,75 @@ describe('request', () => {
       method: 'POST',
       headers: {},
       body: formData,
+    })
+  })
+
+  describe('access-token', () => {
+    const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' }
+
+    it('защищённый запрос отправляет Authorization: Bearer', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ ok: true })))
+
+      await expect(request('/api/protected', { auth: true })).resolves.toEqual({ ok: true })
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/protected', {
+        method: 'GET',
+        headers: { Authorization: 'Bearer access-token' },
+        body: undefined,
+      })
+    })
+
+    it('защищённый запрос с телом отправляет и Authorization, и Content-Type', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(201, JSON.stringify({ id: 'skill-uuid-1' })))
+
+      await request('/api/protected', { method: 'POST', body: { title: 'Йога' }, auth: true })
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/protected', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer access-token', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Йога' }),
+      })
+    })
+
+    it('публичный запрос не отправляет токен, даже если он есть в хранилище', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ ok: true })))
+
+      await request('/api/public')
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/public', {
+        method: 'GET',
+        headers: {},
+        body: undefined,
+      })
+    })
+
+    it('запрос логина не отправляет токен, даже если он есть в хранилище', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ accessToken: 'new' })))
+
+      await request('/api/auth/login', {
+        method: 'POST',
+        body: { email: 'anna@skillswap.local', password: 'secret' },
+      })
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'anna@skillswap.local', password: 'secret' }),
+      })
+    })
+
+    it('защищённый запрос без токена не уходит на сервер и падает с 401', async () => {
+      await expect(request('/api/protected', { auth: true })).rejects.toMatchObject({
+        name: 'RequestError',
+        status: 401,
+        backendMessage: 'Необходима авторизация',
+      } satisfies Partial<RequestError>)
+
+      expect(fetchMock).not.toHaveBeenCalled()
     })
   })
 })

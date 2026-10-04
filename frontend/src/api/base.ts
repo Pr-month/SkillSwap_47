@@ -1,8 +1,12 @@
 //база для основных fetch из json/api
 
+import { getAuthTokens } from './authTokenStorage'
+
 type RequestOptions = {
   method?: string
   body?: unknown
+  /** Защищённый запрос: добавляет Authorization: Bearer <accessToken> из хранилища токенов. */
+  auth?: boolean
 }
 
 export type BackendErrorMessage = string | string[]
@@ -54,6 +58,17 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
   const method = options?.method ?? 'GET'
   const headers: Record<string, string> = {}
   let body: BodyInit | undefined
+
+  if (options?.auth) {
+    const tokens = getAuthTokens()
+
+    if (!tokens) {
+      // Без токена защищённый запрос не отправляем: сразу сообщаем, что нужна авторизация.
+      throw new RequestError(401, 'Необходима авторизация')
+    }
+
+    headers.Authorization = `Bearer ${tokens.accessToken}`
+  }
 
   if (options?.body !== undefined) {
     if (options.body instanceof FormData) {
