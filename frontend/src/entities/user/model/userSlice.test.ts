@@ -1,4 +1,4 @@
-import { expect, test, describe } from '@jest/globals'
+import { expect, test, describe, jest, beforeEach } from '@jest/globals'
 
 import userSlice, {
   getAllUsers,
@@ -12,6 +12,20 @@ import userSlice, {
   type userState,
 } from './userSlice'
 import type { TRegisterData, TUser } from '../../../shared/utils/types'
+import { loginApi } from '../../../api/authApi'
+import { setAuthTokens } from '../../../api/authTokenStorage'
+import { RequestError } from '../../../api/base'
+
+jest.mock('../../../api/authApi', () => ({
+  loginApi: jest.fn(),
+}))
+
+jest.mock('../../../api/authTokenStorage', () => ({
+  setAuthTokens: jest.fn(),
+}))
+
+const mockedLoginApi = loginApi as jest.MockedFunction<typeof loginApi>
+const mockedSetAuthTokens = setAuthTokens as jest.MockedFunction<typeof setAuthTokens>
 
 describe('Проверяем работу userSlice', () => {
   const initialState: userState = {
@@ -288,62 +302,68 @@ describe('Проверяем работу userSlice', () => {
     })
 
     describe('loginUser: ветвления asyncThunk', () => {
-      test('loginUser находит пользователя в store и не идет в localStorage', async () => {
-        const dispatch = jest.fn()
-        const getState = jest.fn(() => ({
-          user: {
-            ...initialState,
-            allUsers: testListUsers,
-          },
-        }))
-        if (testListUsers[0].email === undefined) return
-        if (testListUsers[0].password === undefined) return
-        const thunk = loginUser({
-          email: testListUsers[0].email,
-          password: testListUsers[0].password,
-        })
-
-        const result = await thunk(dispatch, getState, undefined)
-        expect(result.payload).toEqual(testListUsers[0])
+      beforeEach(() => {
+        mockedLoginApi.mockReset()
+        mockedSetAuthTokens.mockReset()
       })
-      test('loginUser не нашел пользователя в store и идет в localStorage', async () => {
-        const dispatch = jest.fn()
-        const getState = jest.fn(() => ({
-          user: {
-            ...initialState,
-            allUsers: [],
-          },
-        }))
-        const spyUser = testListUsers[1]
-        localStorage.setItem('draftUser', JSON.stringify(spyUser))
 
-        if (spyUser.email === undefined) return
-        if (spyUser.password === undefined) return
+      test('loginUser сохраняет токены и возвращает профиль из loginApi', async () => {
+        const dispatch = jest.fn()
+        const getState = jest.fn()
+
+        mockedLoginApi.mockResolvedValue({
+          message: 'Успешный вход',
+          user: {
+            id: '11111111-1111-1111-1111-111111111111',
+            email: 'anna@skillswap.local',
+            name: 'Анна',
+            role: 'USER',
+          },
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        })
+
         const thunk = loginUser({
-          email: spyUser.email,
-          password: spyUser.password,
+          email: 'anna@skillswap.local',
+          password: 'User1234!',
         })
 
         const result = await thunk(dispatch, getState, undefined)
-        expect(result.payload).toEqual(spyUser)
+
+        expect(mockedLoginApi).toHaveBeenCalledWith('anna@skillswap.local', 'User1234!')
+        expect(mockedSetAuthTokens).toHaveBeenCalledWith({
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        })
+        expect(result.type).toBe('user/loginUser/fulfilled')
+        expect(result.payload).toEqual({
+          id: '11111111-1111-1111-1111-111111111111',
+          name: 'Анна',
+          email: 'anna@skillswap.local',
+          city: '',
+          birthDate: '',
+          skillOfferedId: '',
+          subcategoriesWanted: [],
+          avatarUrl: '',
+        })
       })
-      test('loginUser не нашел пользователя нигде', async () => {
+
+      test('loginUser отклоняется при неверном пароле и не пишет токены', async () => {
         const dispatch = jest.fn()
-        const getState = jest.fn(() => ({
-          user: {
-            ...initialState,
-            allUsers: [],
-          },
-        }))
-        localStorage.removeItem('draftUser')
+        const getState = jest.fn()
+
+        mockedLoginApi.mockRejectedValue(new RequestError(401, 'Неверный email или пароль'))
 
         const thunk = loginUser({
-          email: 'okak@mail.ru',
-          password: '1234567890',
+          email: 'anna@skillswap.local',
+          password: 'WrongPass1!',
         })
 
         const result = await thunk(dispatch, getState, undefined)
+
         expect(result.type).toBe('user/loginUser/rejected')
+        expect('error' in result && result.error.message).toBe('Неверный email или пароль')
+        expect(mockedSetAuthTokens).not.toHaveBeenCalled()
       })
     })
   })
