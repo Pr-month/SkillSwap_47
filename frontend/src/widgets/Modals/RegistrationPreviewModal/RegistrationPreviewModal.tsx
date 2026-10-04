@@ -7,6 +7,7 @@ import styles from './RegistrationPreviewModal.module.css'
 interface Props {
   isOpen: boolean
   isSubmitting?: boolean
+  errorMessage?: string | null
   onClose: () => void
   onComplete: () => void | Promise<void>
   title: string
@@ -18,6 +19,7 @@ interface Props {
 export const RegistrationPreviewModal = ({
   isOpen,
   isSubmitting = false,
+  errorMessage,
   onClose,
   onComplete,
   title,
@@ -58,6 +60,21 @@ export const RegistrationPreviewModal = ({
       <div className={styles.container}>
         <h2 className={styles.title}>Ваше предложение</h2>
         <p className={styles.subtitle}>Пожалуйста, проверьте и подтвердите правильность данных</p>
+
+        {errorMessage && (
+          <span
+            role="alert"
+            style={{
+              color: '#bf3920',
+              fontSize: '12px',
+              display: 'block',
+              marginTop: '4px',
+              textAlign: 'center',
+            }}
+          >
+            {errorMessage}
+          </span>
+        )}
 
         <div className={styles.cardWrapper}>
           <SkillCard

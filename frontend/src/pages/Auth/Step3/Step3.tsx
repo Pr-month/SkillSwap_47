@@ -6,7 +6,8 @@ import { yupResolver } from '@hookform/resolvers/yup'
 
 // Стейт
 import { useAppDispatch, useAppSelector } from '../../../app/store/store'
-import { updateDraftSkill } from '../../../entities/Skill/model/skillSlice'
+import { resetDraftSkill, updateDraftSkill } from '../../../entities/Skill/model/skillSlice'
+import { resetDraftUser } from '../../../entities/user/model/userSlice'
 import { completeRegistration } from '../../../features/registration/registrationThunk'
 import { RegistrationPreviewModal } from '../../../widgets/Modals/RegistrationPreviewModal'
 
@@ -27,6 +28,27 @@ import step3Illustration from '../../../shared/assets/svg/step3-illustration.svg
 
 type Step3FormData = yup.InferType<typeof step3Schema>
 
+const readRegistrationError = (error: unknown): string => {
+  if (typeof error === 'string' && error) {
+    return error
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    'message' in error &&
+    typeof error.message === 'string'
+  ) {
+    return error.message
+  }
+
+  return 'Не удалось зарегистрировать пользователя'
+}
+
 const AuthStepThirdPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
@@ -34,6 +56,7 @@ const AuthStepThirdPage: React.FC = () => {
   // Стейт для модалки
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCompletingRegistration, setIsCompletingRegistration] = useState(false)
+  const [serverError, setServerError] = useState<string | null>(null)
 
   // Данные из стора: вытаскиваем draftSkill, категории и статус загрузки
   const {
@@ -80,13 +103,18 @@ const AuthStepThirdPage: React.FC = () => {
   }
 
   const handleCompleteRegistration = async () => {
+    setServerError(null)
+    setIsCompletingRegistration(true)
+
     try {
-      setIsCompletingRegistration(true)
       await dispatch(completeRegistration()).unwrap()
+      dispatch(resetDraftSkill())
+      dispatch(resetDraftUser())
+      localStorage.removeItem('register_category')
       setIsModalOpen(false)
-      navigate(`/`, { state: { openOfferCreatedModal: true } })
+      navigate('/', { state: { openOfferCreatedModal: true } })
     } catch (error) {
-      console.error('Ошибка при завершении регистрации:', error)
+      setServerError(readRegistrationError(error))
     } finally {
       setIsCompletingRegistration(false)
     }
@@ -197,7 +225,20 @@ const AuthStepThirdPage: React.FC = () => {
               )}
             </div>
 
-            {/* Кнопки Назад / Продолжить */}
+            {serverError && (
+              <span
+                role="alert"
+                style={{
+                  color: '#bf3920',
+                  fontSize: '12px',
+                  display: 'block',
+                  marginTop: '4px',
+                }}
+              >
+                {serverError}
+              </span>
+            )}
+
             <div className={styles.row}>
               <ButtonUI
                 type="button"
@@ -242,6 +283,7 @@ const AuthStepThirdPage: React.FC = () => {
       <RegistrationPreviewModal
         isOpen={isModalOpen}
         isSubmitting={isCompletingRegistration}
+        errorMessage={serverError}
         onClose={() => setIsModalOpen(false)}
         onComplete={handleCompleteRegistration}
         title={watch('title') || 'Без названия'}
