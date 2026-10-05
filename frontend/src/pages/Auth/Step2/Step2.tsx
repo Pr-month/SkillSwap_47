@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller, useWatch } from 'react-hook-form'
 import * as yup from 'yup'
@@ -16,6 +16,7 @@ import { Select } from '../../../shared/ui/Select'
 import { SelectSearch } from '../../../shared/ui/SelectSearch'
 import { AvatarInput } from '../../../shared/ui/AvatarInput'
 import { step2Schema } from '../../../shared/lib/validation'
+import { uploadFileApi } from '../../../api/uploadApi'
 
 import styles from './Step2.module.css'
 import step2Illustration from '../../../shared/assets/svg/step2-illustration.svg'
@@ -29,6 +30,8 @@ type Step2FormData = yup.InferType<typeof step2Schema>
 const AuthStepSecondPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false)
+  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null)
 
   // Данные из стора
   const cities = useAppSelector(selectCityNames)
@@ -71,11 +74,43 @@ const AuthStepSecondPage: React.FC = () => {
     ? subcategories.filter((sub) => String(sub.categoryId) === String(currentCatId))
     : subcategories
 
+  const handleAvatarFile = async (file: File | undefined) => {
+    if (!file) {
+      setValue('avatarUrl', undefined, { shouldValidate: true })
+      dispatch(updateDraftUser({ avatarUrl: undefined }))
+      setAvatarUploadError(null)
+      return
+    }
+
+    setIsAvatarUploading(true)
+    setAvatarUploadError(null)
+    setValue('avatarUrl', undefined, { shouldValidate: true })
+
+    try {
+      const url = await uploadFileApi(file)
+      setValue('avatarUrl', url, { shouldValidate: true })
+      dispatch(updateDraftUser({ avatarUrl: url }))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Не удалось загрузить аватар'
+      setAvatarUploadError(message)
+      setValue('avatarUrl', undefined, { shouldValidate: true })
+      dispatch(updateDraftUser({ avatarUrl: undefined }))
+    } finally {
+      setIsAvatarUploading(false)
+    }
+  }
+
   // Сохранение и переход
   const onSubmit = (data: Step2FormData) => {
+    if (isAvatarUploading || avatarUploadError) return
+    if (!data.avatarUrl || data.avatarUrl.startsWith('data:')) return
+
     dispatch(updateDraftUser(data))
     navigate('/register/step-3')
   }
+
+  const isContinueDisabled = !isValid || isAvatarUploading || !!avatarUploadError
+
   return (
     <section className={authStyles.page} aria-labelledby={getAuthStepTitleId(2)}>
       <RegistrationStepHeader step={2} />
@@ -90,12 +125,11 @@ const AuthStepSecondPage: React.FC = () => {
                   <div>
                     <AvatarInput
                       value={field.value}
-                      onChange={(base64) => {
-                        field.onChange(base64)
-                        dispatch(updateDraftUser({ avatarUrl: base64 })) // Идеально чисто
-                      }}
+                      onFileSelect={handleAvatarFile}
+                      isLoading={isAvatarUploading}
+                      error={avatarUploadError}
                     />
-                    {error && (
+                    {error && !avatarUploadError && (
                       <span
                         style={{
                           color: '#bf3920',
@@ -272,7 +306,7 @@ const AuthStepSecondPage: React.FC = () => {
                 Назад
               </ButtonUI>
 
-              <ButtonUI type="submit" className={styles.actionButton} disabled={!isValid}>
+              <ButtonUI type="submit" className={styles.actionButton} disabled={isContinueDisabled}>
                 Продолжить
               </ButtonUI>
             </div>
