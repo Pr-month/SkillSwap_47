@@ -9,14 +9,16 @@ type Props = {
 
 const ProtectedRoute: FC<Props> = ({ children }) => {
   const navigate = useNavigate()
-  const isProfile = useAppSelector((state) => state.user.profileUser)
+  const profileUser = useAppSelector((state) => state.user.profileUser)
+  const isSessionChecked = useAppSelector((state) => state.user.isSessionChecked)
+
   useEffect(() => {
-    if (!isProfile) {
+    if (isSessionChecked && !profileUser) {
       navigate('/login')
     }
-  }, [isProfile, navigate])
+  }, [isSessionChecked, profileUser, navigate])
 
-  if (!isProfile) return null
+  if (!isSessionChecked || !profileUser) return null
 
   return children
 }

@@ -1,7 +1,9 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
 import { loginApi, type TLoginUser } from '../../../api/authApi'
-import { setAuthTokens } from '../../../api/authTokenStorage'
+import { clearAuthTokens, getAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
+import { RequestError } from '../../../api/base'
 import {
+  getMeApi,
   getUsersApi,
   registerUserApi,
   updateUserApi,
@@ -25,6 +27,7 @@ export type userState = {
   allUsers: TUser[]
   draftUser: Partial<TRegisterData>
   profileUser: TUser | null
+  isSessionChecked: boolean
   isLoadingUsers: boolean
   isLoadingRegister: boolean
   isLoadingUpdate: boolean
@@ -43,6 +46,7 @@ export const initialState: userState = {
   allUsers: [],
   draftUser: {},
   profileUser: null,
+  isSessionChecked: false,
   isLoadingUsers: false,
   isLoadingRegister: false,
   isLoadingUpdate: false,
@@ -89,6 +93,23 @@ export const loginUser = createAsyncThunk<TUser, { email: string; password: stri
     return mapLoginUserToProfile(response.user)
   },
 )
+
+export const restoreSession = createAsyncThunk<TUser | null>('user/restoreSession', async () => {
+  const tokens = getAuthTokens()
+  if (!tokens) {
+    return null
+  }
+
+  try {
+    return await getMeApi()
+  } catch (error) {
+    if (error instanceof RequestError && (error.status === 401 || error.status === 403)) {
+      clearAuthTokens()
+      return null
+    }
+    throw error
+  }
+})
 
 export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
   await delay()
@@ -159,10 +180,19 @@ const userSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<TUser>) => {
         state.profileUser = action.payload
         state.isLoadingLogin = false
+        state.isSessionChecked = true
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.errorLogin = action.error.message || 'Не удалось войти в аккаунт'
         state.isLoadingLogin = false
+      })
+      .addCase(restoreSession.fulfilled, (state, action: PayloadAction<TUser | null>) => {
+        state.profileUser = action.payload
+        state.isSessionChecked = true
+      })
+      .addCase(restoreSession.rejected, (state) => {
+        state.profileUser = null
+        state.isSessionChecked = true
       })
       .addCase(logoutUser.pending, (state) => {
         state.isLoadingLogout = true

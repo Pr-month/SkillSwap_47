@@ -3,6 +3,7 @@
 type RequestOptions = {
   method?: string
   body?: unknown
+  headers?: Record<string, string>
 }
 
 export type BackendErrorMessage = string | string[]
@@ -52,7 +53,7 @@ const getErrorMessage = (text: string, status: number): BackendErrorMessage => {
 
 export const request = async <T>(url: string, options?: RequestOptions): Promise<T> => {
   const method = options?.method ?? 'GET'
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { ...options?.headers }
   let body: BodyInit | undefined
 
   if (options?.body !== undefined) {

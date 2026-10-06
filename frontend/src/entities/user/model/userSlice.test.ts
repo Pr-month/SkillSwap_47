@@ -6,6 +6,7 @@ import userSlice, {
   updateUser,
   loginUser,
   logoutUser,
+  restoreSession,
   toggleFavorite,
   updateDraftUser,
   resetDraftUser,
@@ -13,25 +14,40 @@ import userSlice, {
 } from './userSlice'
 import type { TRegisterData, TUser } from '../../../shared/utils/types'
 import { loginApi } from '../../../api/authApi'
-import { setAuthTokens } from '../../../api/authTokenStorage'
+import { getMeApi } from '../../../api/usersApi'
+import { clearAuthTokens, getAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
 import { RequestError } from '../../../api/base'
 
 jest.mock('../../../api/authApi', () => ({
   loginApi: jest.fn(),
 }))
 
+jest.mock('../../../api/usersApi', () => ({
+  getMeApi: jest.fn(),
+  getUsersApi: jest.fn(),
+  registerUserApi: jest.fn(),
+  updateUserApi: jest.fn(),
+  toggleFavoriteApi: jest.fn(),
+}))
+
 jest.mock('../../../api/authTokenStorage', () => ({
   setAuthTokens: jest.fn(),
+  getAuthTokens: jest.fn(),
+  clearAuthTokens: jest.fn(),
 }))
 
 const mockedLoginApi = loginApi as jest.MockedFunction<typeof loginApi>
+const mockedGetMeApi = getMeApi as jest.MockedFunction<typeof getMeApi>
 const mockedSetAuthTokens = setAuthTokens as jest.MockedFunction<typeof setAuthTokens>
+const mockedGetAuthTokens = getAuthTokens as jest.MockedFunction<typeof getAuthTokens>
+const mockedClearAuthTokens = clearAuthTokens as jest.MockedFunction<typeof clearAuthTokens>
 
 describe('Проверяем работу userSlice', () => {
   const initialState: userState = {
     allUsers: [],
     draftUser: {},
     profileUser: null,
+    isSessionChecked: false,
     isLoadingUsers: false,
     isLoadingRegister: false,
     isLoadingUpdate: false,
@@ -168,6 +184,7 @@ describe('Проверяем работу userSlice', () => {
   const stateLoginUserFulfilled = {
     ...initialState,
     isLoadingLogin: false,
+    isSessionChecked: true,
     profileUser: testListUsers[0],
   }
   const stateLogoutUserPending = {
@@ -364,6 +381,74 @@ describe('Проверяем работу userSlice', () => {
         expect(result.type).toBe('user/loginUser/rejected')
         expect('error' in result && result.error.message).toBe('Неверный email или пароль')
         expect(mockedSetAuthTokens).not.toHaveBeenCalled()
+      })
+    })
+  })
+  describe('restoreSession', () => {
+    test('проверяем работу fulfilled с профилем', () => {
+      const newStateFulfilled = userSlice(
+        initialState,
+        restoreSession.fulfilled(testListUsers[0], ''),
+      )
+      expect(newStateFulfilled.profileUser).toEqual(testListUsers[0])
+      expect(newStateFulfilled.isSessionChecked).toBe(true)
+    })
+
+    test('проверяем работу fulfilled без сессии', () => {
+      const newStateFulfilled = userSlice(initialState, restoreSession.fulfilled(null, ''))
+      expect(newStateFulfilled.profileUser).toBeNull()
+      expect(newStateFulfilled.isSessionChecked).toBe(true)
+    })
+
+    test('проверяем работу rejected', () => {
+      const newStateRejected = userSlice(initialState, restoreSession.rejected(new Error(), ''))
+      expect(newStateRejected.profileUser).toBeNull()
+      expect(newStateRejected.isSessionChecked).toBe(true)
+    })
+
+    describe('restoreSession: ветвления asyncThunk', () => {
+      beforeEach(() => {
+        mockedGetAuthTokens.mockReset()
+        mockedGetMeApi.mockReset()
+        mockedClearAuthTokens.mockReset()
+      })
+
+      test('без токена не вызывает getMeApi и возвращает null', async () => {
+        mockedGetAuthTokens.mockReturnValue(null)
+
+        const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
+
+        expect(mockedGetMeApi).not.toHaveBeenCalled()
+        expect(result.type).toBe('user/restoreSession/fulfilled')
+        expect(result.payload).toBeNull()
+      })
+
+      test('с токеном заполняет профиль из getMeApi', async () => {
+        mockedGetAuthTokens.mockReturnValue({
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        })
+        mockedGetMeApi.mockResolvedValue(testListUsers[0])
+
+        const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
+
+        expect(mockedGetMeApi).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/restoreSession/fulfilled')
+        expect(result.payload).toEqual(testListUsers[0])
+      })
+
+      test('при 401 очищает токены и возвращает null', async () => {
+        mockedGetAuthTokens.mockReturnValue({
+          accessToken: 'expired-token',
+          refreshToken: 'refresh-token',
+        })
+        mockedGetMeApi.mockRejectedValue(new RequestError(401, 'Unauthorized'))
+
+        const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
+
+        expect(mockedClearAuthTokens).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/restoreSession/fulfilled')
+        expect(result.payload).toBeNull()
       })
     })
   })

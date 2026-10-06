@@ -82,4 +82,20 @@ describe('request', () => {
       body: formData,
     })
   })
+
+  it('прокидывает Authorization в заголовки', async () => {
+    fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ id: 'user-1' })))
+
+    await expect(
+      request('/api/users/me', {
+        headers: { Authorization: 'Bearer access-token' },
+      }),
+    ).resolves.toEqual({ id: 'user-1' })
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/users/me', {
+      method: 'GET',
+      headers: { Authorization: 'Bearer access-token' },
+      body: undefined,
+    })
+  })
 })
