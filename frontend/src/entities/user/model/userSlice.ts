@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import { loginApi, type TLoginUser } from '../../../api/authApi'
-import { setAuthTokens } from '../../../api/authTokenStorage'
+import { loginApi, logoutApi, type TLoginUser } from '../../../api/authApi'
+import { clearAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
 import {
   getUsersApi,
   registerUserApi,
@@ -8,7 +8,6 @@ import {
   toggleFavoriteApi,
 } from '../../../api/usersApi'
 import type { TUser, TRegisterData } from '../../../shared/utils/types'
-import { delay } from '../../../shared/lib/delay'
 
 const mapLoginUserToProfile = (user: TLoginUser): TUser => ({
   id: user.id,
@@ -91,8 +90,11 @@ export const loginUser = createAsyncThunk<TUser, { email: string; password: stri
 )
 
 export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
-  await delay()
-  return true
+  try {
+    await logoutApi()
+  } finally {
+    clearAuthTokens()
+  }
 })
 
 export const toggleFavorite = createAsyncThunk<TUser, string>(
@@ -173,6 +175,7 @@ const userSlice = createSlice({
         state.isLoadingLogout = false
       })
       .addCase(logoutUser.rejected, (state, action) => {
+        state.profileUser = null
         state.errorLogout = action.error.message || 'Не удалось выйти из аккаунта'
         state.isLoadingLogout = false
       })

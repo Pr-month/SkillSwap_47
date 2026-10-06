@@ -1,8 +1,49 @@
 //база для основных fetch из json/api
 
+import { clearAuthTokens, getAuthTokens, setAuthTokens } from './authTokenStorage'
+
 type RequestOptions = {
   method?: string
   body?: unknown
+  headers?: Record<string, string>
+  skipAuthRefresh?: boolean
+}
+
+type TRefreshTokens = {
+  accessToken: string
+  refreshToken: string
+}
+
+const AUTH_REFRESH_URL = '/api/auth/refresh'
+const AUTH_NO_REFRESH_URLS = new Set(['/api/auth/login', '/api/auth/register', AUTH_REFRESH_URL])
+
+let refreshInFlight: Promise<void> | null = null
+
+const refreshAuthSession = async (): Promise<void> => {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const tokens = getAuthTokens()
+
+      if (!tokens) {
+        throw new RequestError(401, 'Сессия истекла')
+      }
+
+      const next = await request<TRefreshTokens>(AUTH_REFRESH_URL, {
+        method: 'POST',
+        body: { refreshToken: tokens.refreshToken },
+        skipAuthRefresh: true,
+      })
+
+      setAuthTokens({
+        accessToken: next.accessToken,
+        refreshToken: next.refreshToken,
+      })
+    })().finally(() => {
+      refreshInFlight = null
+    })
+  }
+
+  return refreshInFlight
 }
 
 export type BackendErrorMessage = string | string[]
@@ -52,7 +93,7 @@ const getErrorMessage = (text: string, status: number): BackendErrorMessage => {
 
 export const request = async <T>(url: string, options?: RequestOptions): Promise<T> => {
   const method = options?.method ?? 'GET'
-  const headers: Record<string, string> = {}
+  const headers: Record<string, string> = { ...options?.headers }
   let body: BodyInit | undefined
 
   if (options?.body !== undefined) {
@@ -62,6 +103,14 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
     } else {
       headers['Content-Type'] = 'application/json'
       body = JSON.stringify(options.body)
+    }
+  }
+
+  if (!AUTH_NO_REFRESH_URLS.has(url) && !headers.Authorization) {
+    const tokens = getAuthTokens()
+
+    if (tokens) {
+      headers.Authorization = `Bearer ${tokens.accessToken}`
     }
   }
 
@@ -80,7 +129,25 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
   const text = await result.text()
 
   if (!result.ok) {
-    throw new RequestError(result.status, getErrorMessage(text, result.status))
+    const error = new RequestError(result.status, getErrorMessage(text, result.status))
+    const canRefresh =
+      result.status === 401 &&
+      !options?.skipAuthRefresh &&
+      !AUTH_NO_REFRESH_URLS.has(url) &&
+      Boolean(getAuthTokens())
+
+    if (canRefresh) {
+      try {
+        await refreshAuthSession()
+      } catch {
+        clearAuthTokens()
+        throw error
+      }
+
+      return request<T>(url, { ...options, skipAuthRefresh: true })
+    }
+
+    throw error
   }
 
   if (!text.trim()) {
