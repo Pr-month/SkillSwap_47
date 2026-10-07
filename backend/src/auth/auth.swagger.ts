@@ -43,14 +43,18 @@ export class AuthPublicUserDto {
   @ApiPropertyOptional({ nullable: true, example: null })
   about!: string | null;
 
-  @ApiProperty({ example: '1995-05-20' })
-  birthdate!: string;
+  @ApiPropertyOptional({ nullable: true, example: '1995-05-20' })
+  birthdate!: string | null;
 
-  @ApiProperty({ example: 'Москва' })
-  city!: string;
+  @ApiPropertyOptional({ nullable: true, example: 'Москва' })
+  city!: string | null;
 
-  @ApiProperty({ enum: UserGender, example: UserGender.MALE })
-  gender!: UserGender;
+  @ApiPropertyOptional({
+    enum: UserGender,
+    nullable: true,
+    example: UserGender.MALE,
+  })
+  gender!: UserGender | null;
 
   @ApiProperty({ example: '' })
   avatar!: string;
@@ -198,5 +202,37 @@ export function ApiLogout() {
       type: AuthLogoutResponseDto,
     }),
     ApiResponse({ status: 401, description: 'Требуется access-токен' }),
+  );
+}
+
+export function ApiYandexLogin() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Вход через Яндекс OAuth',
+      description:
+        'Редирект на страницу авторизации Яндекса. Callback: GET /auth/yandex/callback',
+    }),
+    ApiResponse({
+      status: 302,
+      description: 'Редирект на oauth.yandex.ru',
+    }),
+  );
+}
+
+export function ApiYandexCallback() {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'Callback Яндекс OAuth',
+      description:
+        'Яндекс перенаправляет сюда после логина. Создаёт пользователя при необходимости и выдаёт JWT.',
+    }),
+    ApiOkResponse({
+      description: 'Успешный вход через Яндекс',
+      type: AuthLoginResponseDto,
+    }),
+    ApiResponse({
+      status: 400,
+      description: 'Email не получен от провайдера',
+    }),
   );
 }
