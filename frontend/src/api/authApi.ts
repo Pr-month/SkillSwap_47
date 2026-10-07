@@ -21,3 +21,35 @@ export const loginApi = (email: string, password: string): Promise<TLoginRespons
     method: 'POST',
     body: { email, password },
   })
+
+export type TRegisterBody = {
+  email: string
+  password: string
+  name: string
+  birthdate: string
+  gender: string
+  city: string
+  wantToLearn: {
+    categoryId: string
+    subcategoryId: string
+  }
+  skill: {
+    title: string
+    categoryId: string
+    subcategoryId: string
+    description: string
+    images?: string[]
+  }
+}
+
+export type TRegisterResponse = {
+  user: TLoginUser
+  accessToken: string
+  refreshToken: string
+}
+
+export const registerApi = (body: TRegisterBody): Promise<TRegisterResponse> =>
+  request<TRegisterResponse>('/api/auth/register', {
+    method: 'POST',
+    body,
+  })
