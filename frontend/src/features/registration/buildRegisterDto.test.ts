@@ -133,4 +133,17 @@ describe('buildRegisterDto', () => {
       subcategoryId: wantSubcategoryId,
     })
   })
+
+  test('сохраняет пробелы по краям пароля без trim', () => {
+    const password = '  User1234!  '
+    const dto = buildRegisterDto({ ...baseDraftUser, password }, baseDraftSkill)
+
+    expect(dto.password).toBe(password)
+  })
+
+  test('бросает ошибку при коротком пароле', () => {
+    expect(() =>
+      buildRegisterDto({ ...baseDraftUser, password: 'Ab1' }, baseDraftSkill),
+    ).toThrow('Пароль должен содержать не менее 8 символов')
+  })
 })

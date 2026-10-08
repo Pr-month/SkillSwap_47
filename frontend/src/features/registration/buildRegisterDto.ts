@@ -37,6 +37,16 @@ const requireString = (value: string | undefined, fieldLabel: string): string =>
   return trimmed
 }
 
+const requirePassword = (value: string | undefined): string => {
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error('Не заполнено поле: пароль')
+  }
+  if (value.length < 8) {
+    throw new Error('Пароль должен содержать не менее 8 символов')
+  }
+  return value
+}
+
 const mapGender = (gender: string | undefined): 'male' | 'female' => {
   const normalized = gender?.trim()
 
@@ -114,7 +124,7 @@ export const buildRegisterDto = (
 
   return {
     email: requireString(draftUser.email, 'email'),
-    password: requireString(draftUser.password, 'пароль'),
+    password: requirePassword(draftUser.password),
     name: requireString(draftUser.name, 'имя'),
     birthdate: mapBirthdate(draftUser.birthDate),
     gender: mapGender(draftUser.gender),
