@@ -1,52 +1,64 @@
 import { useRef } from 'react'
 import type { ChangeEvent } from 'react'
+import clsx from 'clsx'
 import styles from './AvatarInput.module.css'
 import avatarIcon from '../../assets/svg/avatar-icon.svg'
 
-interface AvatarInputProps {
+export type AvatarInputProps = {
   value: string | undefined
-  onChange: (base64: string | undefined) => void
+  onFileSelect: (file: File | undefined) => void
+  isLoading?: boolean
+  error?: string | null
 }
 
-export const AvatarInput = ({ value, onChange }: AvatarInputProps) => {
+export const AvatarInput = ({
+  value,
+  onFileSelect,
+  isLoading = false,
+  error = null,
+}: AvatarInputProps) => {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) {
-      onChange(undefined)
+      onFileSelect(undefined)
       return
     }
 
-    // Перевод файла в base64
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64 = reader.result as string
-      onChange(base64) // Отдаем наружу готовую строку!
-    }
-    reader.readAsDataURL(file)
-
+    onFileSelect(file)
     e.target.value = ''
   }
 
   return (
-    <button type="button" className={styles.avatarInput} onClick={() => inputRef.current?.click()}>
-      <span className={styles.avatarWrapper}>
-        {value ? (
-          <img src={value} alt="Аватар" className={styles.image} />
-        ) : (
-          <img src={avatarIcon} alt="Аватар пользователя" className={styles.icon} />
-        )}
-        <span className={styles.plus}></span>
-      </span>
+    <div className={styles.root}>
+      <button
+        type="button"
+        className={clsx(styles.avatarInput, isLoading && styles.loading)}
+        onClick={() => inputRef.current?.click()}
+        disabled={isLoading}
+        aria-busy={isLoading}
+        aria-label={isLoading ? 'Загрузка аватара' : 'Выбрать аватар'}
+      >
+        <span className={styles.avatarWrapper}>
+          {value ? (
+            <img src={value} alt="Аватар" className={styles.image} />
+          ) : (
+            <img src={avatarIcon} alt="" className={styles.icon} />
+          )}
+          {isLoading ? <span className={styles.spinner} aria-hidden /> : <span className={styles.plus} />}
+        </span>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleChange}
-        className={styles.input}
-      />
-    </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleChange}
+          className={styles.input}
+          disabled={isLoading}
+        />
+      </button>
+      {error ? <span className={styles.error}>{error}</span> : null}
+    </div>
   )
 }

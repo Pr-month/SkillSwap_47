@@ -1,43 +1,23 @@
 //база для основных fetch из json/api
 
-import { clearAuthTokens, getAuthTokens, setAuthTokens } from './authTokenStorage'
+import { clearAuthTokens, getAuthTokens } from './authTokenStorage'
 
 type RequestOptions = {
   method?: string
   body?: unknown
-  headers?: Record<string, string>
+  /** Защищённый запрос: добавляет Authorization: Bearer <accessToken> из хранилища токенов. */
+  auth?: boolean
+  /** Не пытаться обновлять токены при 401 (для refresh и повторного запроса). */
   skipAuthRefresh?: boolean
 }
-
-type TRefreshTokens = {
-  accessToken: string
-  refreshToken: string
-}
-
-const AUTH_REFRESH_URL = '/api/auth/refresh'
-const AUTH_NO_REFRESH_URLS = new Set(['/api/auth/login', '/api/auth/register', AUTH_REFRESH_URL])
 
 let refreshInFlight: Promise<void> | null = null
 
 const refreshAuthSession = async (): Promise<void> => {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
-      const tokens = getAuthTokens()
-
-      if (!tokens) {
-        throw new RequestError(401, 'Сессия истекла')
-      }
-
-      const next = await request<TRefreshTokens>(AUTH_REFRESH_URL, {
-        method: 'POST',
-        body: { refreshToken: tokens.refreshToken },
-        skipAuthRefresh: true,
-      })
-
-      setAuthTokens({
-        accessToken: next.accessToken,
-        refreshToken: next.refreshToken,
-      })
+      const { refreshApi } = await import('./authApi')
+      await refreshApi()
     })().finally(() => {
       refreshInFlight = null
     })
@@ -93,8 +73,19 @@ const getErrorMessage = (text: string, status: number): BackendErrorMessage => {
 
 export const request = async <T>(url: string, options?: RequestOptions): Promise<T> => {
   const method = options?.method ?? 'GET'
-  const headers: Record<string, string> = { ...options?.headers }
+  const headers: Record<string, string> = {}
   let body: BodyInit | undefined
+
+  if (options?.auth) {
+    const tokens = getAuthTokens()
+
+    if (!tokens) {
+      // Без токена защищённый запрос не отправляем: сразу сообщаем, что нужна авторизация.
+      throw new RequestError(401, 'Необходима авторизация')
+    }
+
+    headers.Authorization = `Bearer ${tokens.accessToken}`
+  }
 
   if (options?.body !== undefined) {
     if (options.body instanceof FormData) {
@@ -103,14 +94,6 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
     } else {
       headers['Content-Type'] = 'application/json'
       body = JSON.stringify(options.body)
-    }
-  }
-
-  if (!AUTH_NO_REFRESH_URLS.has(url) && !headers.Authorization) {
-    const tokens = getAuthTokens()
-
-    if (tokens) {
-      headers.Authorization = `Bearer ${tokens.accessToken}`
     }
   }
 
@@ -132,8 +115,8 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
     const error = new RequestError(result.status, getErrorMessage(text, result.status))
     const canRefresh =
       result.status === 401 &&
+      Boolean(options?.auth) &&
       !options?.skipAuthRefresh &&
-      !AUTH_NO_REFRESH_URLS.has(url) &&
       Boolean(getAuthTokens())
 
     if (canRefresh) {
@@ -146,16 +129,8 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
         throw error
       }
 
-      const retryHeaders = options?.headers ? { ...options.headers } : undefined
-      if (retryHeaders?.Authorization) {
-        delete retryHeaders.Authorization
-      }
-
-      return request<T>(url, {
-        ...options,
-        headers: retryHeaders,
-        skipAuthRefresh: true,
-      })
+      // auth: true заново возьмёт accessToken из storage после refresh
+      return request<T>(url, { ...options, skipAuthRefresh: true })
     }
 
     throw error
