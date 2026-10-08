@@ -180,6 +180,72 @@ describe('request', () => {
     clearAuthTokens()
   })
 
+  it('при повторе после refresh обновляет явно заданный Authorization', async () => {
+    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
+    const authorizedCalls: string[] = []
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const authHeader = (init?.headers as Record<string, string> | undefined)?.Authorization
+
+      if (url === '/api/auth/refresh') {
+        return createResponse(
+          200,
+          JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+        )
+      }
+
+      if (url === '/api/users/me') {
+        authorizedCalls.push(authHeader ?? '')
+
+        if (authHeader === 'Bearer old-access') {
+          return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+        }
+
+        return createResponse(200, JSON.stringify({ id: 'user-1', name: 'Анна' }))
+      }
+
+      return createResponse(500, 'unexpected')
+    })
+
+    await expect(
+      request('/api/users/me', {
+        headers: { Authorization: 'Bearer old-access' },
+      }),
+    ).resolves.toEqual({ id: 'user-1', name: 'Анна' })
+
+    expect(authorizedCalls).toEqual(['Bearer old-access', 'Bearer new-access'])
+    expect(getAuthTokens()).toEqual({
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+    })
+  })
+
+  it('при временной ошибке refresh сохраняет токены', async () => {
+    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = String(input)
+
+      if (url === '/api/auth/refresh') {
+        return createResponse(500, JSON.stringify({ message: 'Internal Server Error' }))
+      }
+
+      return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+    })
+
+    await expect(request('/api/protected')).rejects.toMatchObject({
+      status: 401,
+      backendMessage: 'Требуется авторизация',
+    } satisfies Partial<RequestError>)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(getAuthTokens()).toEqual({
+      accessToken: 'old-access',
+      refreshToken: 'old-refresh',
+    })
+  })
+
   it('не обновляет токены на 401 для login', async () => {
     fetchMock.mockResolvedValue(createResponse(401, JSON.stringify({ message: 'Неверный email' })))
 

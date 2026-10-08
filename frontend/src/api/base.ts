@@ -139,12 +139,23 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
     if (canRefresh) {
       try {
         await refreshAuthSession()
-      } catch {
-        clearAuthTokens()
+      } catch (refreshError) {
+        if (refreshError instanceof RequestError && refreshError.status === 401) {
+          clearAuthTokens()
+        }
         throw error
       }
 
-      return request<T>(url, { ...options, skipAuthRefresh: true })
+      const retryHeaders = options?.headers ? { ...options.headers } : undefined
+      if (retryHeaders?.Authorization) {
+        delete retryHeaders.Authorization
+      }
+
+      return request<T>(url, {
+        ...options,
+        headers: retryHeaders,
+        skipAuthRefresh: true,
+      })
     }
 
     throw error
