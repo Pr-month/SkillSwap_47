@@ -13,13 +13,14 @@ import userSlice, {
   type userState,
 } from './userSlice'
 import type { TRegisterData, TUser } from '../../../shared/utils/types'
-import { loginApi } from '../../../api/authApi'
+import { loginApi, logoutApi } from '../../../api/authApi'
 import { getMeApi } from '../../../api/usersApi'
 import { clearAuthTokens, getAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
 import { RequestError } from '../../../api/base'
 
 jest.mock('../../../api/authApi', () => ({
   loginApi: jest.fn(),
+  logoutApi: jest.fn(),
 }))
 
 jest.mock('../../../api/usersApi', () => ({
@@ -37,6 +38,7 @@ jest.mock('../../../api/authTokenStorage', () => ({
 }))
 
 const mockedLoginApi = loginApi as jest.MockedFunction<typeof loginApi>
+const mockedLogoutApi = logoutApi as jest.MockedFunction<typeof logoutApi>
 const mockedGetMeApi = getMeApi as jest.MockedFunction<typeof getMeApi>
 const mockedSetAuthTokens = setAuthTokens as jest.MockedFunction<typeof setAuthTokens>
 const mockedGetAuthTokens = getAuthTokens as jest.MockedFunction<typeof getAuthTokens>
@@ -437,7 +439,7 @@ describe('Проверяем работу userSlice', () => {
         expect(result.payload).toEqual(testListUsers[0])
       })
 
-      test('при 401 очищает токены и возвращает null', async () => {
+      test('при 401 возвращает null и не очищает токены сам', async () => {
         mockedGetAuthTokens.mockReturnValue({
           accessToken: 'expired-token',
           refreshToken: 'refresh-token',
@@ -446,7 +448,7 @@ describe('Проверяем работу userSlice', () => {
 
         const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
 
-        expect(mockedClearAuthTokens).toHaveBeenCalledTimes(1)
+        expect(mockedClearAuthTokens).not.toHaveBeenCalled()
         expect(result.type).toBe('user/restoreSession/fulfilled')
         expect(result.payload).toBeNull()
       })
@@ -459,14 +461,54 @@ describe('Проверяем работу userSlice', () => {
     })
 
     test('проверяем работу fulfilled', () => {
-      const newStateFulfilled = userSlice(initialState, logoutUser.fulfilled(true, ''))
+      const newStateFulfilled = userSlice(initialState, logoutUser.fulfilled(undefined, ''))
       expect(newStateFulfilled).toEqual(stateLogoutUserFulfilled)
     })
 
     test('проверяем работу rejected fallback', () => {
-      const newStateRejected = userSlice(initialState, logoutUser.rejected(new Error(), ''))
+      const loggedInState = {
+        ...initialState,
+        profileUser: testListUsers[0],
+      }
+      const newStateRejected = userSlice(loggedInState, logoutUser.rejected(new Error(), ''))
+      expect(newStateRejected.profileUser).toBeNull()
       expect(newStateRejected.errorLogout).toBe('Не удалось выйти из аккаунта')
       expect(newStateRejected.isLoadingLogout).toBe(false)
+    })
+
+    describe('logoutUser: ветвления asyncThunk', () => {
+      beforeEach(() => {
+        mockedLogoutApi.mockReset()
+        mockedClearAuthTokens.mockReset()
+      })
+
+      test('logoutUser вызывает API и очищает токены', async () => {
+        const dispatch = jest.fn()
+        const getState = jest.fn()
+        mockedLogoutApi.mockResolvedValue({ message: 'Успешный выход' })
+
+        const result = await logoutUser()(dispatch, getState, undefined)
+
+        expect(mockedLogoutApi).toHaveBeenCalledTimes(1)
+        expect(mockedClearAuthTokens).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/logoutUser/fulfilled')
+      })
+
+      test('logoutUser очищает токены даже при сетевом сбое', async () => {
+        const dispatch = jest.fn()
+        const getState = jest.fn()
+        mockedLogoutApi.mockRejectedValue(
+          new RequestError(null, 'Не удалось выполнить запрос. Проверьте подключение к сети.'),
+        )
+
+        const result = await logoutUser()(dispatch, getState, undefined)
+
+        expect(mockedClearAuthTokens).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/logoutUser/rejected')
+        expect('error' in result && result.error.message).toBe(
+          'Не удалось выполнить запрос. Проверьте подключение к сети.',
+        )
+      })
     })
   })
   describe('toggleFavorite', () => {

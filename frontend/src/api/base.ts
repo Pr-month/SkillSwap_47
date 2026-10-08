@@ -1,9 +1,49 @@
 //база для основных fetch из json/api
 
+import { clearAuthTokens, getAuthTokens, setAuthTokens } from './authTokenStorage'
+
 type RequestOptions = {
   method?: string
   body?: unknown
   headers?: Record<string, string>
+  skipAuthRefresh?: boolean
+}
+
+type TRefreshTokens = {
+  accessToken: string
+  refreshToken: string
+}
+
+const AUTH_REFRESH_URL = '/api/auth/refresh'
+const AUTH_NO_REFRESH_URLS = new Set(['/api/auth/login', '/api/auth/register', AUTH_REFRESH_URL])
+
+let refreshInFlight: Promise<void> | null = null
+
+const refreshAuthSession = async (): Promise<void> => {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const tokens = getAuthTokens()
+
+      if (!tokens) {
+        throw new RequestError(401, 'Сессия истекла')
+      }
+
+      const next = await request<TRefreshTokens>(AUTH_REFRESH_URL, {
+        method: 'POST',
+        body: { refreshToken: tokens.refreshToken },
+        skipAuthRefresh: true,
+      })
+
+      setAuthTokens({
+        accessToken: next.accessToken,
+        refreshToken: next.refreshToken,
+      })
+    })().finally(() => {
+      refreshInFlight = null
+    })
+  }
+
+  return refreshInFlight
 }
 
 export type BackendErrorMessage = string | string[]
@@ -66,6 +106,14 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
     }
   }
 
+  if (!AUTH_NO_REFRESH_URLS.has(url) && !headers.Authorization) {
+    const tokens = getAuthTokens()
+
+    if (tokens) {
+      headers.Authorization = `Bearer ${tokens.accessToken}`
+    }
+  }
+
   let result: Response
 
   try {
@@ -81,7 +129,36 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
   const text = await result.text()
 
   if (!result.ok) {
-    throw new RequestError(result.status, getErrorMessage(text, result.status))
+    const error = new RequestError(result.status, getErrorMessage(text, result.status))
+    const canRefresh =
+      result.status === 401 &&
+      !options?.skipAuthRefresh &&
+      !AUTH_NO_REFRESH_URLS.has(url) &&
+      Boolean(getAuthTokens())
+
+    if (canRefresh) {
+      try {
+        await refreshAuthSession()
+      } catch (refreshError) {
+        if (refreshError instanceof RequestError && refreshError.status === 401) {
+          clearAuthTokens()
+        }
+        throw error
+      }
+
+      const retryHeaders = options?.headers ? { ...options.headers } : undefined
+      if (retryHeaders?.Authorization) {
+        delete retryHeaders.Authorization
+      }
+
+      return request<T>(url, {
+        ...options,
+        headers: retryHeaders,
+        skipAuthRefresh: true,
+      })
+    }
+
+    throw error
   }
 
   if (!text.trim()) {

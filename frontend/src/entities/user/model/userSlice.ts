@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
-import { loginApi, type TLoginUser } from '../../../api/authApi'
+import { loginApi, logoutApi, type TLoginUser } from '../../../api/authApi'
 import { clearAuthTokens, getAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
 import { RequestError } from '../../../api/base'
 import {
@@ -10,7 +10,6 @@ import {
   toggleFavoriteApi,
 } from '../../../api/usersApi'
 import type { TUser, TRegisterData } from '../../../shared/utils/types'
-import { delay } from '../../../shared/lib/delay'
 
 const mapLoginUserToProfile = (user: TLoginUser): TUser => ({
   id: user.id,
@@ -103,8 +102,8 @@ export const restoreSession = createAsyncThunk<TUser | null>('user/restoreSessio
   try {
     return await getMeApi()
   } catch (error) {
+    // Refresh и очистка невалидной сессии — в request(); здесь не трогаем живые токены.
     if (error instanceof RequestError && (error.status === 401 || error.status === 403)) {
-      clearAuthTokens()
       return null
     }
     throw error
@@ -112,8 +111,11 @@ export const restoreSession = createAsyncThunk<TUser | null>('user/restoreSessio
 })
 
 export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
-  await delay()
-  return true
+  try {
+    await logoutApi()
+  } finally {
+    clearAuthTokens()
+  }
 })
 
 export const toggleFavorite = createAsyncThunk<TUser, string>(
@@ -203,6 +205,7 @@ const userSlice = createSlice({
         state.isLoadingLogout = false
       })
       .addCase(logoutUser.rejected, (state, action) => {
+        state.profileUser = null
         state.errorLogout = action.error.message || 'Не удалось выйти из аккаунта'
         state.isLoadingLogout = false
       })
