@@ -15,7 +15,7 @@ import moreSquareIcon from '../../shared/assets/icons/more-square.png'
 import { useAppDispatch } from '../../app/store/store'
 import { toggleFavorite } from '../../entities/user/model/userSlice'
 import { addToSwap } from '../../entities/Skill/model/skillSlice'
-import { getSkillByIdApi } from '../../api/skillsApi'
+import { getSimilarBySkillIdApi, getSkillByIdApi, type TSimilarOffer } from '../../api/skillsApi'
 import { RequestError } from '../../api/base'
 import clsx from 'clsx'
 
@@ -48,6 +48,7 @@ const SkillPage: React.FC = () => {
 
   const [fetchedSkill, setFetchedSkill] = useState<TSkill | null>(null)
   const [user, setUser] = useState<TUser | null>(null)
+  const [similarOffers, setSimilarOffers] = useState<TSimilarOffer[]>([])
   const [status, setStatus] = useState<TPageStatus>('loading')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -63,6 +64,7 @@ const SkillPage: React.FC = () => {
       if (!id) {
         setFetchedSkill(null)
         setUser(null)
+        setSimilarOffers([])
         setStatus('notFound')
         setErrorMessage(null)
         return
@@ -71,17 +73,24 @@ const SkillPage: React.FC = () => {
       setStatus('loading')
       setFetchedSkill(null)
       setUser(null)
+      setSimilarOffers([])
       setErrorMessage(null)
 
       try {
-        const { skill: nextSkill, owner } = await getSkillByIdApi(id)
+        const [{ skill: nextSkill, owner }, similar] = await Promise.all([
+          getSkillByIdApi(id),
+          getSimilarBySkillIdApi(id).catch(() => [] as TSimilarOffer[]),
+        ])
         if (cancelled) return
 
         setFetchedSkill(nextSkill)
         setUser(owner)
+        setSimilarOffers(similar)
         setStatus('ready')
       } catch (error) {
         if (cancelled) return
+
+        setSimilarOffers([])
 
         if (
           error instanceof RequestError &&
@@ -298,11 +307,7 @@ const SkillPage: React.FC = () => {
         </div>
       </div>
 
-      <UserList
-        variant="skillpage"
-        currentCategoryId={skill.categoryId}
-        currentUserId={skill.userId}
-      />
+      <UserList variant="skillpage" similarOffers={similarOffers} />
       <ExchangeOfferedModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   )
