@@ -22,6 +22,10 @@ export type TRefreshResponse = {
   refreshToken: string
 }
 
+export type TLogoutResponse = {
+  message: string
+}
+
 export const loginApi = (email: string, password: string): Promise<TLoginResponse> =>
   request<TLoginResponse>('/api/auth/login', {
     method: 'POST',
@@ -37,6 +41,7 @@ export const refreshApi = async (refreshToken?: string): Promise<TRefreshRespons
   const tokens = await request<TRefreshResponse>('/api/auth/refresh', {
     method: 'POST',
     body: { refreshToken: token },
+    skipAuthRefresh: true,
   })
 
   setAuthTokens({
@@ -46,3 +51,9 @@ export const refreshApi = async (refreshToken?: string): Promise<TRefreshRespons
 
   return tokens
 }
+
+export const logoutApi = (): Promise<TLogoutResponse> =>
+  request<TLogoutResponse>('/api/auth/logout', {
+    method: 'POST',
+    auth: true,
+  })

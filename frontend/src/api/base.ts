@@ -1,12 +1,29 @@
 //база для основных fetch из json/api
 
-import { getAuthTokens } from './authTokenStorage'
+import { clearAuthTokens, getAuthTokens } from './authTokenStorage'
 
 type RequestOptions = {
   method?: string
   body?: unknown
   /** Защищённый запрос: добавляет Authorization: Bearer <accessToken> из хранилища токенов. */
   auth?: boolean
+  /** Не пытаться обновлять токены при 401 (для refresh и повторного запроса). */
+  skipAuthRefresh?: boolean
+}
+
+let refreshInFlight: Promise<void> | null = null
+
+const refreshAuthSession = async (): Promise<void> => {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const { refreshApi } = await import('./authApi')
+      await refreshApi()
+    })().finally(() => {
+      refreshInFlight = null
+    })
+  }
+
+  return refreshInFlight
 }
 
 export type BackendErrorMessage = string | string[]
@@ -95,7 +112,28 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
   const text = await result.text()
 
   if (!result.ok) {
-    throw new RequestError(result.status, getErrorMessage(text, result.status))
+    const error = new RequestError(result.status, getErrorMessage(text, result.status))
+    const canRefresh =
+      result.status === 401 &&
+      Boolean(options?.auth) &&
+      !options?.skipAuthRefresh &&
+      Boolean(getAuthTokens())
+
+    if (canRefresh) {
+      try {
+        await refreshAuthSession()
+      } catch (refreshError) {
+        if (refreshError instanceof RequestError && refreshError.status === 401) {
+          clearAuthTokens()
+        }
+        throw error
+      }
+
+      // auth: true заново возьмёт accessToken из storage после refresh
+      return request<T>(url, { ...options, skipAuthRefresh: true })
+    }
+
+    throw error
   }
 
   if (!text.trim()) {

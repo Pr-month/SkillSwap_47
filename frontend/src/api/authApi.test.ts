@@ -1,6 +1,12 @@
 import { request, RequestError } from './base'
 import { getAuthTokens, setAuthTokens } from './authTokenStorage'
-import { loginApi, refreshApi, type TLoginResponse, type TRefreshResponse } from './authApi'
+import {
+  loginApi,
+  logoutApi,
+  refreshApi,
+  type TLoginResponse,
+  type TRefreshResponse,
+} from './authApi'
 
 jest.mock('./base', () => ({
   request: jest.fn(),
@@ -73,6 +79,7 @@ describe('refreshApi', () => {
     expect(requestMock).toHaveBeenCalledWith('/api/auth/refresh', {
       method: 'POST',
       body: { refreshToken: 'old-refresh-token' },
+      skipAuthRefresh: true,
     })
     expect(setAuthTokensMock).toHaveBeenCalledWith({
       accessToken: 'new-access-token',
@@ -95,6 +102,7 @@ describe('refreshApi', () => {
     expect(requestMock).toHaveBeenCalledWith('/api/auth/refresh', {
       method: 'POST',
       body: { refreshToken: 'stored-refresh' },
+      skipAuthRefresh: true,
     })
   })
 
@@ -116,5 +124,22 @@ describe('refreshApi', () => {
     })
     expect(requestMock).not.toHaveBeenCalled()
     expect(setAuthTokensMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('logoutApi', () => {
+  beforeEach(() => {
+    requestMock.mockReset()
+  })
+
+  it('отправляет защищённый POST /auth/logout', async () => {
+    const response = { message: 'Успешный выход' }
+    requestMock.mockResolvedValue(response)
+
+    await expect(logoutApi()).resolves.toEqual(response)
+    expect(requestMock).toHaveBeenCalledWith('/api/auth/logout', {
+      method: 'POST',
+      auth: true,
+    })
   })
 })
