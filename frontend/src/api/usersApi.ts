@@ -1,5 +1,6 @@
-import { fetchAllPages } from './base'
+import { fetchAllPages, request, RequestError } from './base'
 import { delay } from '../shared/lib/delay'
+import { getAuthTokens } from './authTokenStorage'
 import { postToStorage, patchToStorage } from './localStorageApi'
 import type { TUser, TRegisterData } from '../shared/utils/types'
 
@@ -23,7 +24,11 @@ type TBackendUser = {
   avatar?: string
   skills?: TBackendSkillBrief[]
   wantToLearn?: TBackendCategory[]
+  favoriteSkills?: Array<TBackendSkillBrief | string>
 }
+
+const mapFavoriteIds = (favorites?: Array<TBackendSkillBrief | string>): string[] =>
+  (favorites ?? []).map((item) => (typeof item === 'string' ? item : item.id))
 
 const mapUser = (user: TBackendUser): TUser => ({
   id: user.id,
@@ -36,7 +41,7 @@ const mapUser = (user: TBackendUser): TUser => ({
   avatarUrl: user.avatar ?? '',
   skillOfferedId: user.skills?.[0]?.id ?? '',
   subcategoriesWanted: (user.wantToLearn ?? []).map((c) => c.id),
-  favoritesUserId: [],
+  favoritesUserId: mapFavoriteIds(user.favoriteSkills),
   createdAt: undefined,
 })
 
@@ -44,6 +49,18 @@ const mapUser = (user: TBackendUser): TUser => ({
 export const getUsersApi = async (): Promise<TUser[]> => {
   const users = await fetchAllPages<TBackendUser>('/api/users')
   return users.map(mapUser)
+}
+
+export const getMeApi = async (): Promise<TUser> => {
+  const tokens = getAuthTokens()
+  if (!tokens) {
+    throw new RequestError(401, 'Нет токена авторизации')
+  }
+
+  const user = await request<TBackendUser>('/api/users/me', {
+    auth: true,
+  })
+  return mapUser(user)
 }
 
 //обертка-метод для эмуляции создания нового пользователя(на самом деле записывается в localStorage)

@@ -1,5 +1,6 @@
 import { clearAuthTokens, getAuthTokens, setAuthTokens } from './authTokenStorage'
 import { RequestError, request } from './base'
+import { getMeApi } from './usersApi'
 
 const fetchMock = jest.fn()
 
@@ -267,7 +268,7 @@ describe('request', () => {
         return createResponse(500, 'unexpected')
       })
 
-      await expect(request('/api/users/me', { auth: true })).resolves.toEqual({
+      await expect(getMeApi()).resolves.toMatchObject({
         id: 'user-1',
         name: 'Анна',
       })
