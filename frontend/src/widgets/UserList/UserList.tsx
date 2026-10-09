@@ -13,6 +13,7 @@ import { UserCard } from '../UserCard/UserCard'
 import { isFiltersActive } from '../../entities/user/model/filterSlice'
 import { Button } from '../../shared/ui/Button'
 import type { TSkill, TUser, TSubcategory } from '../../shared/utils/types'
+import type { TSimilarOffer } from '../../api/skillsApi'
 
 const PAGE_SIZE = 20
 const DEFAULT_SKILL: TSkill = {
@@ -76,33 +77,12 @@ function InfiniteScrollSentinel({
 }
 
 interface SkillLayoutProps {
-  currentCategoryId?: string
-  currentUserId?: string
-  allUsers: TUser[]
-  allSkills: TSkill[]
+  similarOffers: TSimilarOffer[]
   allSubcategories: TSubcategory[]
 }
 
-export const SkillLayout = ({
-  currentCategoryId,
-  currentUserId,
-  allUsers,
-  allSkills,
-  allSubcategories,
-}: SkillLayoutProps) => {
+export const SkillLayout = ({ similarOffers, allSubcategories }: SkillLayoutProps) => {
   const [showAllSkillpage, setShowAllSkillpage] = useState(false)
-
-  if (!currentCategoryId) return null
-
-  const usersWithSkills = allUsers.map((user) => {
-    const userSkill = allSkills.find((skill) => skill.userId === user.id)
-    return { user, userSkill }
-  })
-
-  const similarUsers = usersWithSkills.filter(
-    ({ user, userSkill }) =>
-      userSkill?.categoryId === currentCategoryId && user.id !== currentUserId,
-  )
 
   return (
     <div className={styles.container}>
@@ -113,7 +93,7 @@ export const SkillLayout = ({
         </Button>
       </section>
       <ul className={styles.userListSkill}>
-        {(showAllSkillpage ? similarUsers : similarUsers.slice(0, 4)).map(({ user, userSkill }) => {
+        {(showAllSkillpage ? similarOffers : similarOffers.slice(0, 4)).map(({ user, skill }) => {
           const userSubs = allSubcategories.filter((sub) =>
             user.subcategoriesWanted.some((wantedId) => String(wantedId) === sub.id),
           )
@@ -123,7 +103,7 @@ export const SkillLayout = ({
               key={user.id}
               user={user}
               subcategories={userSubs}
-              skill={userSkill || DEFAULT_SKILL}
+              skill={skill || DEFAULT_SKILL}
             />
           )
         })}
@@ -177,12 +157,10 @@ export const FavoritesLayout = ({
 
 export const UserList = ({
   variant = 'homepage',
-  currentCategoryId,
-  currentUserId,
+  similarOffers = [],
 }: {
   variant?: 'homepage' | 'skillpage' | 'favoritpage'
-  currentCategoryId?: string
-  currentUserId?: string
+  similarOffers?: TSimilarOffer[]
 }) => {
   // Состояния для отображения
   const [showAllPopular, toggleShowAllPopular] = useState(false)
@@ -242,15 +220,7 @@ export const UserList = ({
   if (allSubcategories.length === 0) return null
   // Сценарий 1: Пользователь что-то ищет или применил фильтры
   if (variant === 'skillpage') {
-    return (
-      <SkillLayout
-        allUsers={allUsers}
-        allSkills={allSkills}
-        allSubcategories={allSubcategories}
-        currentCategoryId={currentCategoryId}
-        currentUserId={currentUserId}
-      />
-    )
+    return <SkillLayout similarOffers={similarOffers} allSubcategories={allSubcategories} />
   }
 
   if (variant === 'favoritpage') {
