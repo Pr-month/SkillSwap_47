@@ -19,6 +19,7 @@ import { PhotoInput } from '../../../shared/ui/PhotoInput'
 import { RegistrationStepHeader } from '../RegistrationStepHeader'
 import { getAuthStepTitleId } from '../authStepIds'
 import { step3Schema } from '../../../shared/lib/validation'
+import { uploadSkillImages } from './uploadSkillImages'
 
 // Стили и картинки
 import authStyles from '../Auth.module.css'
@@ -34,6 +35,8 @@ const AuthStepThirdPage: React.FC = () => {
   // Стейт для модалки
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCompletingRegistration, setIsCompletingRegistration] = useState(false)
+  const [isImagesUploading, setIsImagesUploading] = useState(false)
+  const [imagesUploadError, setImagesUploadError] = useState<string | null>(null)
 
   // Данные из стора: вытаскиваем draftSkill, категории и статус загрузки
   const {
@@ -74,8 +77,31 @@ const AuthStepThirdPage: React.FC = () => {
     return filteredSubcategories.find((s) => String(s.id) === String(subcategoryIdValue))
   }, [filteredSubcategories, subcategoryIdValue])
 
+  const handleFilesSelect = async (files: File[]) => {
+    if (!files.length) return
+
+    setIsImagesUploading(true)
+    setImagesUploadError(null)
+
+    const { urls, errorMessage } = await uploadSkillImages(files)
+    const current = (watch('imagesUrl') as string[]) || []
+    const next = [...current, ...urls].filter((url) => !url.startsWith('data:'))
+
+    setValue('imagesUrl', next, { shouldValidate: true })
+    dispatch(updateDraftSkill({ imagesUrl: next }))
+    setImagesUploadError(errorMessage)
+    setIsImagesUploading(false)
+  }
+
   // Отправка формы
   const onSubmit = () => {
+    const imagesUrl = ((watch('imagesUrl') as string[]) || []).filter(
+      (url) => !url.startsWith('data:'),
+    )
+    if (imagesUrl.length !== ((watch('imagesUrl') as string[]) || []).length) {
+      setValue('imagesUrl', imagesUrl, { shouldValidate: true })
+      dispatch(updateDraftSkill({ imagesUrl }))
+    }
     setIsModalOpen(true)
   }
 
@@ -176,25 +202,16 @@ const AuthStepThirdPage: React.FC = () => {
             <div>
               <PhotoInput
                 value={watch('imagesUrl') as string[]}
-                onChange={(filesBase64) => {
-                  setValue('imagesUrl', filesBase64, { shouldValidate: true })
-                  dispatch(updateDraftSkill({ imagesUrl: filesBase64 }))
+                onFilesSelect={handleFilesSelect}
+                onChange={(urls) => {
+                  setValue('imagesUrl', urls, { shouldValidate: true })
+                  dispatch(updateDraftSkill({ imagesUrl: urls }))
                 }}
+                isLoading={isImagesUploading}
+                error={imagesUploadError || errors.imagesUrl?.message}
                 multiple={true}
                 accept="image/png, image/jpeg, image/webp"
               />
-              {errors.imagesUrl && (
-                <span
-                  style={{
-                    color: '#bf3920',
-                    fontSize: '12px',
-                    display: 'block',
-                    marginTop: '4px',
-                  }}
-                >
-                  {errors.imagesUrl.message}
-                </span>
-              )}
             </div>
 
             {/* Кнопки Назад / Продолжить */}
@@ -211,7 +228,7 @@ const AuthStepThirdPage: React.FC = () => {
               <ButtonUI
                 type="submit"
                 className={styles.actionButton}
-                disabled={!isValid || isSubmitting}
+                disabled={!isValid || isSubmitting || isImagesUploading}
               >
                 {isSubmitting ? 'Отправка...' : 'Продолжить'}
               </ButtonUI>

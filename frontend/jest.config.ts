@@ -8,9 +8,20 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(svg|png|jpg|jpeg|gif|webp)$': '<rootDir>/src/test/fileMock.ts',
   },
 
-  //   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  transform: {
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: '<rootDir>/tsconfig.jest.json',
+        diagnostics: false,
+      },
+    ],
+  },
+
+  setupFilesAfterEnv: ['<rootDir>/src/test/setupTests.ts'],
 
   clearMocks: true,
 

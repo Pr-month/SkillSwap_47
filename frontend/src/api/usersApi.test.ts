@@ -55,7 +55,7 @@ describe('getMeApi', () => {
       createdAt: undefined,
     })
     expect(requestMock).toHaveBeenCalledWith('/api/users/me', {
-      headers: { Authorization: 'Bearer access-token' },
+      auth: true,
     })
   })
 

@@ -58,7 +58,7 @@ export const getMeApi = async (): Promise<TUser> => {
   }
 
   const user = await request<TBackendUser>('/api/users/me', {
-    headers: { Authorization: `Bearer ${tokens.accessToken}` },
+    auth: true,
   })
   return mapUser(user)
 }

@@ -1,5 +1,6 @@
 import { clearAuthTokens, getAuthTokens, setAuthTokens } from './authTokenStorage'
 import { RequestError, request } from './base'
+import { getMeApi } from './usersApi'
 
 const fetchMock = jest.fn()
 
@@ -21,7 +22,7 @@ describe('request', () => {
 
   beforeEach(() => {
     fetchMock.mockReset()
-    localStorage.clear()
+    clearAuthTokens()
   })
 
   it('сохраняет статус и массив сообщений backend', async () => {
@@ -85,196 +86,241 @@ describe('request', () => {
     })
   })
 
-  it('прокидывает Authorization в заголовки', async () => {
-    fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ id: 'user-1' })))
+  describe('access-token', () => {
+    const tokens = { accessToken: 'access-token', refreshToken: 'refresh-token' }
 
-    await expect(
-      request('/api/users/me', {
+    it('защищённый запрос отправляет Authorization: Bearer', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ ok: true })))
+
+      await expect(request('/api/protected', { auth: true })).resolves.toEqual({ ok: true })
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/protected', {
+        method: 'GET',
         headers: { Authorization: 'Bearer access-token' },
-      }),
-    ).resolves.toEqual({ id: 'user-1' })
+        body: undefined,
+      })
+    })
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/users/me', {
-      method: 'GET',
-      headers: { Authorization: 'Bearer access-token' },
-      body: undefined,
+    it('защищённый запрос с телом отправляет и Authorization, и Content-Type', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(201, JSON.stringify({ id: 'skill-uuid-1' })))
+
+      await request('/api/protected', { method: 'POST', body: { title: 'Йога' }, auth: true })
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/protected', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer access-token', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: 'Йога' }),
+      })
+    })
+
+    it('публичный запрос не отправляет токен, даже если он есть в хранилище', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ ok: true })))
+
+      await request('/api/public')
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/public', {
+        method: 'GET',
+        headers: {},
+        body: undefined,
+      })
+    })
+
+    it('запрос логина не отправляет токен, даже если он есть в хранилище', async () => {
+      setAuthTokens(tokens)
+      fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ accessToken: 'new' })))
+
+      await request('/api/auth/login', {
+        method: 'POST',
+        body: { email: 'anna@skillswap.local', password: 'secret' },
+      })
+
+      expect(fetchMock).toHaveBeenCalledWith('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'anna@skillswap.local', password: 'secret' }),
+      })
+    })
+
+    it('защищённый запрос без токена не уходит на сервер и падает с 401', async () => {
+      await expect(request('/api/protected', { auth: true })).rejects.toMatchObject({
+        name: 'RequestError',
+        status: 401,
+        backendMessage: 'Необходима авторизация',
+      } satisfies Partial<RequestError>)
+
+      expect(fetchMock).not.toHaveBeenCalled()
     })
   })
 
-  it('добавляет Authorization из сохранённых токенов', async () => {
-    setAuthTokens({ accessToken: 'access-token', refreshToken: 'refresh-token' })
-    fetchMock.mockResolvedValue(createResponse(200, JSON.stringify({ ok: true })))
+  describe('auth-refresh', () => {
+    it('для нескольких параллельных 401 делает один refresh и повторяет каждый запрос', async () => {
+      setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
+      const callsByUrl: Record<string, number> = {}
 
-    await expect(request('/api/users')).resolves.toEqual({ ok: true })
+      fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        callsByUrl[url] = (callsByUrl[url] ?? 0) + 1
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/users', {
-      method: 'GET',
-      headers: { Authorization: 'Bearer access-token' },
-      body: undefined,
-    })
-  })
+        if (url === '/api/auth/refresh') {
+          return createResponse(
+            200,
+            JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+          )
+        }
 
-  it('для нескольких параллельных 401 делает один refresh и повторяет каждый запрос', async () => {
-    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
-    const callsByUrl: Record<string, number> = {}
-
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input)
-      callsByUrl[url] = (callsByUrl[url] ?? 0) + 1
-
-      if (url === '/api/auth/refresh') {
-        return createResponse(
-          200,
-          JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
-        )
-      }
-
-      if (callsByUrl[url] === 1) {
-        return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
-      }
-
-      return createResponse(200, JSON.stringify({ url }))
-    })
-
-    await expect(
-      Promise.all([request('/api/protected-a'), request('/api/protected-b')]),
-    ).resolves.toEqual([{ url: '/api/protected-a' }, { url: '/api/protected-b' }])
-
-    expect(callsByUrl['/api/auth/refresh']).toBe(1)
-    expect(callsByUrl['/api/protected-a']).toBe(2)
-    expect(callsByUrl['/api/protected-b']).toBe(2)
-    expect(getAuthTokens()).toEqual({
-      accessToken: 'new-access',
-      refreshToken: 'new-refresh',
-    })
-  })
-
-  it('повторный 401 после refresh не запускает бесконечный цикл', async () => {
-    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
-
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input)
-
-      if (url === '/api/auth/refresh') {
-        return createResponse(
-          200,
-          JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
-        )
-      }
-
-      return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
-    })
-
-    await expect(request('/api/protected')).rejects.toMatchObject({
-      status: 401,
-      backendMessage: 'Требуется авторизация',
-    } satisfies Partial<RequestError>)
-
-    expect(fetchMock).toHaveBeenCalledTimes(3)
-  })
-
-  it('при неудачном refresh очищает сессию и не повторяет исходный запрос', async () => {
-    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
-
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input)
-
-      if (url === '/api/auth/refresh') {
-        return createResponse(401, JSON.stringify({ message: 'Невалидный refresh токен' }))
-      }
-
-      return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
-    })
-
-    await expect(request('/api/protected')).rejects.toMatchObject({
-      status: 401,
-      backendMessage: 'Требуется авторизация',
-    } satisfies Partial<RequestError>)
-
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(getAuthTokens()).toBeNull()
-    clearAuthTokens()
-  })
-
-  it('при повторе после refresh обновляет явно заданный Authorization', async () => {
-    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
-    const authorizedCalls: string[] = []
-
-    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input)
-      const authHeader = (init?.headers as Record<string, string> | undefined)?.Authorization
-
-      if (url === '/api/auth/refresh') {
-        return createResponse(
-          200,
-          JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
-        )
-      }
-
-      if (url === '/api/users/me') {
-        authorizedCalls.push(authHeader ?? '')
-
-        if (authHeader === 'Bearer old-access') {
+        if (callsByUrl[url] === 1) {
           return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
         }
 
-        return createResponse(200, JSON.stringify({ id: 'user-1', name: 'Анна' }))
-      }
+        return createResponse(200, JSON.stringify({ url }))
+      })
 
-      return createResponse(500, 'unexpected')
+      await expect(
+        Promise.all([
+          request('/api/protected-a', { auth: true }),
+          request('/api/protected-b', { auth: true }),
+        ]),
+      ).resolves.toEqual([{ url: '/api/protected-a' }, { url: '/api/protected-b' }])
+
+      expect(callsByUrl['/api/auth/refresh']).toBe(1)
+      expect(callsByUrl['/api/protected-a']).toBe(2)
+      expect(callsByUrl['/api/protected-b']).toBe(2)
+      expect(getAuthTokens()).toEqual({
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+      })
     })
 
-    await expect(
-      request('/api/users/me', {
-        headers: { Authorization: 'Bearer old-access' },
-      }),
-    ).resolves.toEqual({ id: 'user-1', name: 'Анна' })
+    it('повторный 401 после refresh не запускает бесконечный цикл', async () => {
+      setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
 
-    expect(authorizedCalls).toEqual(['Bearer old-access', 'Bearer new-access'])
-    expect(getAuthTokens()).toEqual({
-      accessToken: 'new-access',
-      refreshToken: 'new-refresh',
-    })
-  })
+      fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+        const url = String(input)
 
-  it('при временной ошибке refresh сохраняет токены', async () => {
-    setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
+        if (url === '/api/auth/refresh') {
+          return createResponse(
+            200,
+            JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+          )
+        }
 
-    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input)
+        return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+      })
 
-      if (url === '/api/auth/refresh') {
-        return createResponse(500, JSON.stringify({ message: 'Internal Server Error' }))
-      }
+      await expect(request('/api/protected', { auth: true })).rejects.toMatchObject({
+        status: 401,
+        backendMessage: 'Требуется авторизация',
+      } satisfies Partial<RequestError>)
 
-      return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+      expect(fetchMock).toHaveBeenCalledTimes(3)
     })
 
-    await expect(request('/api/protected')).rejects.toMatchObject({
-      status: 401,
-      backendMessage: 'Требуется авторизация',
-    } satisfies Partial<RequestError>)
+    it('при неудачном refresh очищает сессию и не повторяет исходный запрос', async () => {
+      setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(getAuthTokens()).toEqual({
-      accessToken: 'old-access',
-      refreshToken: 'old-refresh',
+      fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+        const url = String(input)
+
+        if (url === '/api/auth/refresh') {
+          return createResponse(401, JSON.stringify({ message: 'Невалидный refresh токен' }))
+        }
+
+        return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+      })
+
+      await expect(request('/api/protected', { auth: true })).rejects.toMatchObject({
+        status: 401,
+        backendMessage: 'Требуется авторизация',
+      } satisfies Partial<RequestError>)
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(getAuthTokens()).toBeNull()
     })
-  })
 
-  it('не обновляет токены на 401 для login', async () => {
-    fetchMock.mockResolvedValue(createResponse(401, JSON.stringify({ message: 'Неверный email' })))
+    it('после refresh повторяет запрос с новым access-токеном', async () => {
+      setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
+      const authorizedCalls: string[] = []
 
-    await expect(
-      request('/api/auth/login', {
-        method: 'POST',
-        body: { email: 'user@example.com', password: 'bad' },
-      }),
-    ).rejects.toMatchObject({
-      status: 401,
-      backendMessage: 'Неверный email',
-    } satisfies Partial<RequestError>)
+      fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        const authHeader = (init?.headers as Record<string, string> | undefined)?.Authorization
 
-    expect(fetchMock).toHaveBeenCalledTimes(1)
+        if (url === '/api/auth/refresh') {
+          return createResponse(
+            200,
+            JSON.stringify({ accessToken: 'new-access', refreshToken: 'new-refresh' }),
+          )
+        }
+
+        if (url === '/api/users/me') {
+          authorizedCalls.push(authHeader ?? '')
+
+          if (authHeader === 'Bearer old-access') {
+            return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+          }
+
+          return createResponse(200, JSON.stringify({ id: 'user-1', name: 'Анна' }))
+        }
+
+        return createResponse(500, 'unexpected')
+      })
+
+      await expect(getMeApi()).resolves.toMatchObject({
+        id: 'user-1',
+        name: 'Анна',
+      })
+
+      expect(authorizedCalls).toEqual(['Bearer old-access', 'Bearer new-access'])
+      expect(getAuthTokens()).toEqual({
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+      })
+    })
+
+    it('при временной ошибке refresh сохраняет токены', async () => {
+      setAuthTokens({ accessToken: 'old-access', refreshToken: 'old-refresh' })
+
+      fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+        const url = String(input)
+
+        if (url === '/api/auth/refresh') {
+          return createResponse(500, JSON.stringify({ message: 'Internal Server Error' }))
+        }
+
+        return createResponse(401, JSON.stringify({ message: 'Требуется авторизация' }))
+      })
+
+      await expect(request('/api/protected', { auth: true })).rejects.toMatchObject({
+        status: 401,
+        backendMessage: 'Требуется авторизация',
+      } satisfies Partial<RequestError>)
+
+      expect(fetchMock).toHaveBeenCalledTimes(2)
+      expect(getAuthTokens()).toEqual({
+        accessToken: 'old-access',
+        refreshToken: 'old-refresh',
+      })
+    })
+
+    it('не обновляет токены на 401 для login', async () => {
+      fetchMock.mockResolvedValue(
+        createResponse(401, JSON.stringify({ message: 'Неверный email' })),
+      )
+
+      await expect(
+        request('/api/auth/login', {
+          method: 'POST',
+          body: { email: 'user@example.com', password: 'bad' },
+        }),
+      ).rejects.toMatchObject({
+        status: 401,
+        backendMessage: 'Неверный email',
+      } satisfies Partial<RequestError>)
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+    })
   })
 })
