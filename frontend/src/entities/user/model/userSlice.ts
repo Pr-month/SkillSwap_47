@@ -127,6 +127,9 @@ const userSlice = createSlice({
     resetDraftUser(state) {
       state.draftUser = {}
     },
+    setProfileUser(state, action: PayloadAction<TUser>) {
+      state.profileUser = action.payload
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -205,5 +208,5 @@ const userSlice = createSlice({
   },
 })
 
-export const { updateDraftUser, resetDraftUser } = userSlice.actions
+export const { updateDraftUser, resetDraftUser, setProfileUser } = userSlice.actions
 export default userSlice.reducer

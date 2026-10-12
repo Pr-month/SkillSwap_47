@@ -27,7 +27,7 @@ export type TRegisterBody = {
   password: string
   name: string
   birthdate: string
-  gender: string
+  gender: 'male' | 'female'
   city: string
   wantToLearn: {
     categoryId: string
@@ -42,8 +42,32 @@ export type TRegisterBody = {
   }
 }
 
+export type TRegisterUser = {
+  id: string
+  name: string
+  email: string
+  about?: string | null
+  birthdate: string
+  city: string
+  gender: 'male' | 'female'
+  avatar?: string
+  role: TAuthRole
+  skills?: {
+    id: string
+    title: string
+    description: string
+    images?: string[]
+    category?: { id: string; name?: string }
+    owner?: { id: string }
+  }[]
+  wantToLearn?: {
+    id: string
+    name?: string
+  }[]
+}
+
 export type TRegisterResponse = {
-  user: TLoginUser
+  user: TRegisterUser
   accessToken: string
   refreshToken: string
 }

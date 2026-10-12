@@ -12,7 +12,7 @@ type TBackendSkill = {
   owner?: { id: string }
 }
 
-const mapSkill = (skill: TBackendSkill): TSkill => {
+export const mapSkill = (skill: TBackendSkill): TSkill => {
   const subcategoryId = skill.category?.id ?? ''
   return {
     id: skill.id,

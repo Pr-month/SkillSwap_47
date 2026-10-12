@@ -25,7 +25,7 @@ type TBackendUser = {
   wantToLearn?: TBackendCategory[]
 }
 
-const mapUser = (user: TBackendUser): TUser => ({
+export const mapUser = (user: TBackendUser): TUser => ({
   id: user.id,
   name: user.name,
   city: user.city,
