@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
 
-import { useAppDispatch } from '../../app/store/store'
+import { useAppDispatch, useAppSelector } from '../../app/store/store'
 import { loginUser } from '../../entities/user/model/userSlice'
 
 import { ButtonUI } from '../../shared/ui/Button'
@@ -24,6 +24,7 @@ type LoginFormData = yup.InferType<typeof validationSchema>
 const LoginPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+  const { isLoadingLogin, errorLogin } = useAppSelector((state) => state.user)
 
   const {
     handleSubmit,
@@ -44,8 +45,8 @@ const LoginPage: React.FC = () => {
     try {
       await dispatch(loginUser({ email: data.email, password: data.password })).unwrap()
       navigate('/profile')
-    } catch (err) {
-      console.error('Ошибка входа:', err)
+    } catch {
+      // ошибка уже в errorLogin через rejected
     }
   }
 
@@ -88,14 +89,21 @@ const LoginPage: React.FC = () => {
                 placeholder="Введите ваш пароль"
                 value={getValues('password') || ''}
                 onChange={(value) => setValue('password', value, { shouldValidate: true })}
-                isError={!!errors.password}
+                isError={!!errors.password || !!errorLogin}
                 warningMessage={
-                  errors.password?.message || 'Пароль должен содержать не менее 8 знаков'
+                  errors.password?.message ||
+                  errorLogin ||
+                  'Пароль должен содержать не менее 8 знаков'
                 }
               />
             </div>
 
-            <ButtonUI type="submit" variant="primary" className={styles.submit} disabled={!isValid}>
+            <ButtonUI
+              type="submit"
+              variant="primary"
+              className={styles.submit}
+              disabled={!isValid || isLoadingLogin}
+            >
               Войти
             </ButtonUI>
             <ButtonUI

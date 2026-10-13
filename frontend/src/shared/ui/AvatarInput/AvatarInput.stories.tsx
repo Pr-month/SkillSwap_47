@@ -11,18 +11,26 @@ const meta: Meta<typeof AvatarInput> = {
     docs: {
       description: {
         component:
-          'Поле для загрузки аватара. При выборе файла переводит его в base64 и показывает превью изображения.',
+          'Поле для выбора файла аватара. Превью показывает URL; загрузка на сервер выполняется снаружи.',
       },
     },
   },
   argTypes: {
     value: {
       control: 'text',
-      description: 'Текущее изображение в виде строки base64 или URL.',
+      description: 'URL превью аватара (/uploads/...).',
     },
-    onChange: {
-      action: 'changed',
-      description: 'Вызывается при выборе нового изображения.',
+    onFileSelect: {
+      action: 'fileSelected',
+      description: 'Вызывается при выборе файла.',
+    },
+    isLoading: {
+      control: 'boolean',
+      description: 'Индикатор загрузки.',
+    },
+    error: {
+      control: 'text',
+      description: 'Текст ошибки загрузки.',
     },
   },
 }
@@ -37,9 +45,13 @@ const AvatarInputStory = (args: React.ComponentProps<typeof AvatarInput>) => {
     <AvatarInput
       {...args}
       value={value}
-      onChange={(newValue) => {
-        setValue(newValue)
-        args.onChange?.(newValue)
+      onFileSelect={(file) => {
+        args.onFileSelect?.(file)
+        if (!file) {
+          setValue(undefined)
+          return
+        }
+        setValue(URL.createObjectURL(file))
       }}
     />
   )
@@ -48,6 +60,24 @@ const AvatarInputStory = (args: React.ComponentProps<typeof AvatarInput>) => {
 export const Default: Story = {
   args: {
     value: undefined,
+    isLoading: false,
+    error: null,
   },
   render: (args) => <AvatarInputStory {...args} />,
+}
+
+export const Loading: Story = {
+  args: {
+    value: undefined,
+    isLoading: true,
+    error: null,
+  },
+}
+
+export const WithError: Story = {
+  args: {
+    value: undefined,
+    isLoading: false,
+    error: 'Не удалось загрузить аватар',
+  },
 }

@@ -1,8 +1,29 @@
 //база для основных fetch из json/api
 
+import { clearAuthTokens, getAuthTokens } from './authTokenStorage'
+
 type RequestOptions = {
   method?: string
   body?: unknown
+  /** Защищённый запрос: добавляет Authorization: Bearer <accessToken> из хранилища токенов. */
+  auth?: boolean
+  /** Не пытаться обновлять токены при 401 (для refresh и повторного запроса). */
+  skipAuthRefresh?: boolean
+}
+
+let refreshInFlight: Promise<void> | null = null
+
+const refreshAuthSession = async (): Promise<void> => {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      const { refreshApi } = await import('./authApi')
+      await refreshApi()
+    })().finally(() => {
+      refreshInFlight = null
+    })
+  }
+
+  return refreshInFlight
 }
 
 export type BackendErrorMessage = string | string[]
@@ -53,11 +74,27 @@ const getErrorMessage = (text: string, status: number): BackendErrorMessage => {
 export const request = async <T>(url: string, options?: RequestOptions): Promise<T> => {
   const method = options?.method ?? 'GET'
   const headers: Record<string, string> = {}
-  let body: string | undefined
+  let body: BodyInit | undefined
+
+  if (options?.auth) {
+    const tokens = getAuthTokens()
+
+    if (!tokens) {
+      // Без токена защищённый запрос не отправляем: сразу сообщаем, что нужна авторизация.
+      throw new RequestError(401, 'Необходима авторизация')
+    }
+
+    headers.Authorization = `Bearer ${tokens.accessToken}`
+  }
 
   if (options?.body !== undefined) {
-    headers['Content-Type'] = 'application/json'
-    body = JSON.stringify(options.body)
+    if (options.body instanceof FormData) {
+      body = options.body
+      // Content-Type не задаём — boundary выставит браузер/fetch
+    } else {
+      headers['Content-Type'] = 'application/json'
+      body = JSON.stringify(options.body)
+    }
   }
 
   let result: Response
@@ -75,7 +112,28 @@ export const request = async <T>(url: string, options?: RequestOptions): Promise
   const text = await result.text()
 
   if (!result.ok) {
-    throw new RequestError(result.status, getErrorMessage(text, result.status))
+    const error = new RequestError(result.status, getErrorMessage(text, result.status))
+    const canRefresh =
+      result.status === 401 &&
+      Boolean(options?.auth) &&
+      !options?.skipAuthRefresh &&
+      Boolean(getAuthTokens())
+
+    if (canRefresh) {
+      try {
+        await refreshAuthSession()
+      } catch (refreshError) {
+        if (refreshError instanceof RequestError && refreshError.status === 401) {
+          clearAuthTokens()
+        }
+        throw error
+      }
+
+      // auth: true заново возьмёт accessToken из storage после refresh
+      return request<T>(url, { ...options, skipAuthRefresh: true })
+    }
+
+    throw error
   }
 
   if (!text.trim()) {

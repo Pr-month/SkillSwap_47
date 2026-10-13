@@ -1,30 +1,32 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit'
+import { loginApi, logoutApi, type TLoginUser } from '../../../api/authApi'
+import { clearAuthTokens, getAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
+import { RequestError } from '../../../api/base'
 import {
+  getMeApi,
   getUsersApi,
   registerUserApi,
   updateUserApi,
   toggleFavoriteApi,
 } from '../../../api/usersApi'
 import type { TUser, TRegisterData } from '../../../shared/utils/types'
-import { delay } from '../../../shared/lib/delay'
 
-//Флоу данных для пользователей на главной странице:
-//Компонент UserList получает из стора данные(использует useAppSelector)(можно пока что для визуализации брать всех юзеров
-//потом будете брать уже отфильтрованных)
-//записывает их в переменную. Возвращает что-то типо следующего:
-// users.map((elem,key)=> {
-//<li key={key}>
-// <UserCard user={elem}/>
-// </li>
-//})
+const mapLoginUserToProfile = (user: TLoginUser): TUser => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  city: '',
+  birthDate: '',
+  skillOfferedId: '',
+  subcategoriesWanted: [],
+  avatarUrl: '',
+})
 
 export type userState = {
   allUsers: TUser[]
-  //это поле поможет вам собрать все данные по регистрации
-  //получить их через useAppSelector и передать в registerUser
   draftUser: Partial<TRegisterData>
-  //получаем его, чтобы заполнять автоматически данные в профиле
   profileUser: TUser | null
+  isSessionChecked: boolean
   isLoadingUsers: boolean
   isLoadingRegister: boolean
   isLoadingUpdate: boolean
@@ -43,6 +45,7 @@ export const initialState: userState = {
   allUsers: [],
   draftUser: {},
   profileUser: null,
+  isSessionChecked: false,
   isLoadingUsers: false,
   isLoadingRegister: false,
   isLoadingUpdate: false,
@@ -57,7 +60,6 @@ export const initialState: userState = {
   errorFavorite: null,
 }
 
-//обязательно запускается при инициализации приложения!!!
 export const getAllUsers = createAsyncThunk<TUser[]>('user/getAllUsers', async () => {
   const data = await getUsersApi()
   return data
@@ -71,8 +73,6 @@ export const registerUser = createAsyncThunk<TUser, TRegisterData>(
   },
 )
 
-//вызывать при изменении полей на странице профиля(не регистрации)
-//пример, изменение имени в профиле: dispatch(updateUser({ name: `${что пользователь ввел}` }))
 export const updateUser = createAsyncThunk<TUser, Partial<TUser>>(
   'user/updateUser',
   async (userData) => {
@@ -81,30 +81,41 @@ export const updateUser = createAsyncThunk<TUser, Partial<TUser>>(
   },
 )
 
-export const loginUser = createAsyncThunk<
-  TUser,
-  { email: string; password: string },
-  { state: { user: userState } }
->('user/loginUser', async ({ email, password }, { getState }) => {
-  await delay()
-  const { allUsers } = getState().user
+export const loginUser = createAsyncThunk<TUser, { email: string; password: string }>(
+  'user/loginUser',
+  async ({ email, password }) => {
+    const response = await loginApi(email, password)
+    setAuthTokens({
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
+    })
+    return mapLoginUserToProfile(response.user)
+  },
+)
 
-  const storeUser = allUsers.find((user) => user.email === email && user.password === password)
-  if (storeUser) return storeUser
-
-  const localUser = localStorage.getItem('draftUser')
-  if (localUser) {
-    const user: TUser = JSON.parse(localUser)
-    if (user.email === email && user.password === password) {
-      return user
-    }
+export const restoreSession = createAsyncThunk<TUser | null>('user/restoreSession', async () => {
+  const tokens = getAuthTokens()
+  if (!tokens) {
+    return null
   }
-  throw new Error('Пользователь не найден')
+
+  try {
+    return await getMeApi()
+  } catch (error) {
+    // Refresh и очистка невалидной сессии — в request(); здесь не трогаем живые токены.
+    if (error instanceof RequestError && (error.status === 401 || error.status === 403)) {
+      return null
+    }
+    throw error
+  }
 })
 
 export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
-  await delay()
-  return true
+  try {
+    await logoutApi()
+  } finally {
+    clearAuthTokens()
+  }
 })
 
 export const toggleFavorite = createAsyncThunk<TUser, string>(
@@ -119,11 +130,9 @@ const userSlice = createSlice({
   name: 'user',
   initialState,
   reducers: {
-    //вызывать при заполнении любого окошка формы регистрации(если это не записывать в стор, состояние между шагами не сохранится)
     updateDraftUser(state, action: PayloadAction<Partial<TRegisterData>>) {
       state.draftUser = { ...state.draftUser, ...action.payload }
     },
-    //вызывается при завершении регистрации успешно (все три шага)
     resetDraftUser(state) {
       state.draftUser = {}
     },
@@ -176,10 +185,19 @@ const userSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action: PayloadAction<TUser>) => {
         state.profileUser = action.payload
         state.isLoadingLogin = false
+        state.isSessionChecked = true
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.errorLogin = action.error.message || 'Не удалось войти в аккаунт'
         state.isLoadingLogin = false
+      })
+      .addCase(restoreSession.fulfilled, (state, action: PayloadAction<TUser | null>) => {
+        state.profileUser = action.payload
+        state.isSessionChecked = true
+      })
+      .addCase(restoreSession.rejected, (state) => {
+        state.profileUser = null
+        state.isSessionChecked = true
       })
       .addCase(logoutUser.pending, (state) => {
         state.isLoadingLogout = true
@@ -190,6 +208,7 @@ const userSlice = createSlice({
         state.isLoadingLogout = false
       })
       .addCase(logoutUser.rejected, (state, action) => {
+        state.profileUser = null
         state.errorLogout = action.error.message || 'Не удалось выйти из аккаунта'
         state.isLoadingLogout = false
       })

@@ -7,6 +7,7 @@ import type { StringValue } from 'ms';
 import { CategoriesModule } from '../categories/categories.module';
 import { CitiesModule } from '../cities/cities.module';
 import { IJwtConfig, jwtConfig } from '../config/jwt.config';
+import { MailModule } from '../mail/mail.module';
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
@@ -34,6 +35,7 @@ import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
     UsersModule,
     CitiesModule,
     CategoriesModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [

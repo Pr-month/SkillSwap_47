@@ -1,4 +1,4 @@
-import { expect, test, describe } from '@jest/globals'
+import { expect, test, describe, jest, beforeEach } from '@jest/globals'
 
 import userSlice, {
   getAllUsers,
@@ -6,18 +6,50 @@ import userSlice, {
   updateUser,
   loginUser,
   logoutUser,
+  restoreSession,
   toggleFavorite,
   updateDraftUser,
   resetDraftUser,
   type userState,
 } from './userSlice'
 import type { TRegisterData, TUser } from '../../../shared/utils/types'
+import { loginApi, logoutApi } from '../../../api/authApi'
+import { getMeApi } from '../../../api/usersApi'
+import { clearAuthTokens, getAuthTokens, setAuthTokens } from '../../../api/authTokenStorage'
+import { RequestError } from '../../../api/base'
+
+jest.mock('../../../api/authApi', () => ({
+  loginApi: jest.fn(),
+  logoutApi: jest.fn(),
+}))
+
+jest.mock('../../../api/usersApi', () => ({
+  getMeApi: jest.fn(),
+  getUsersApi: jest.fn(),
+  registerUserApi: jest.fn(),
+  updateUserApi: jest.fn(),
+  toggleFavoriteApi: jest.fn(),
+}))
+
+jest.mock('../../../api/authTokenStorage', () => ({
+  setAuthTokens: jest.fn(),
+  getAuthTokens: jest.fn(),
+  clearAuthTokens: jest.fn(),
+}))
+
+const mockedLoginApi = loginApi as jest.MockedFunction<typeof loginApi>
+const mockedLogoutApi = logoutApi as jest.MockedFunction<typeof logoutApi>
+const mockedGetMeApi = getMeApi as jest.MockedFunction<typeof getMeApi>
+const mockedSetAuthTokens = setAuthTokens as jest.MockedFunction<typeof setAuthTokens>
+const mockedGetAuthTokens = getAuthTokens as jest.MockedFunction<typeof getAuthTokens>
+const mockedClearAuthTokens = clearAuthTokens as jest.MockedFunction<typeof clearAuthTokens>
 
 describe('Проверяем работу userSlice', () => {
   const initialState: userState = {
     allUsers: [],
     draftUser: {},
     profileUser: null,
+    isSessionChecked: false,
     isLoadingUsers: false,
     isLoadingRegister: false,
     isLoadingUpdate: false,
@@ -154,6 +186,7 @@ describe('Проверяем работу userSlice', () => {
   const stateLoginUserFulfilled = {
     ...initialState,
     isLoadingLogin: false,
+    isSessionChecked: true,
     profileUser: testListUsers[0],
   }
   const stateLogoutUserPending = {
@@ -288,62 +321,136 @@ describe('Проверяем работу userSlice', () => {
     })
 
     describe('loginUser: ветвления asyncThunk', () => {
-      test('loginUser находит пользователя в store и не идет в localStorage', async () => {
+      beforeEach(() => {
+        mockedLoginApi.mockReset()
+        mockedSetAuthTokens.mockReset()
+      })
+
+      test('loginUser сохраняет токены и возвращает профиль из loginApi', async () => {
         const dispatch = jest.fn()
-        const getState = jest.fn(() => ({
+        const getState = jest.fn()
+
+        mockedLoginApi.mockResolvedValue({
+          message: 'Успешный вход',
           user: {
-            ...initialState,
-            allUsers: testListUsers,
+            id: '11111111-1111-1111-1111-111111111111',
+            email: 'anna@skillswap.local',
+            name: 'Анна',
+            role: 'USER',
           },
-        }))
-        if (testListUsers[0].email === undefined) return
-        if (testListUsers[0].password === undefined) return
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        })
+
         const thunk = loginUser({
-          email: testListUsers[0].email,
-          password: testListUsers[0].password,
+          email: 'anna@skillswap.local',
+          password: 'User1234!',
         })
 
         const result = await thunk(dispatch, getState, undefined)
+
+        expect(mockedLoginApi).toHaveBeenCalledWith('anna@skillswap.local', 'User1234!')
+        expect(mockedSetAuthTokens).toHaveBeenCalledWith({
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        })
+        expect(result.type).toBe('user/loginUser/fulfilled')
+        expect(result.payload).toEqual({
+          id: '11111111-1111-1111-1111-111111111111',
+          name: 'Анна',
+          email: 'anna@skillswap.local',
+          city: '',
+          birthDate: '',
+          skillOfferedId: '',
+          subcategoriesWanted: [],
+          avatarUrl: '',
+        })
+      })
+
+      test('loginUser отклоняется при неверном пароле и не пишет токены', async () => {
+        const dispatch = jest.fn()
+        const getState = jest.fn()
+
+        mockedLoginApi.mockRejectedValue(new RequestError(401, 'Неверный email или пароль'))
+
+        const thunk = loginUser({
+          email: 'anna@skillswap.local',
+          password: 'WrongPass1!',
+        })
+
+        const result = await thunk(dispatch, getState, undefined)
+
+        expect(result.type).toBe('user/loginUser/rejected')
+        expect('error' in result && result.error.message).toBe('Неверный email или пароль')
+        expect(mockedSetAuthTokens).not.toHaveBeenCalled()
+      })
+    })
+  })
+  describe('restoreSession', () => {
+    test('проверяем работу fulfilled с профилем', () => {
+      const newStateFulfilled = userSlice(
+        initialState,
+        restoreSession.fulfilled(testListUsers[0], ''),
+      )
+      expect(newStateFulfilled.profileUser).toEqual(testListUsers[0])
+      expect(newStateFulfilled.isSessionChecked).toBe(true)
+    })
+
+    test('проверяем работу fulfilled без сессии', () => {
+      const newStateFulfilled = userSlice(initialState, restoreSession.fulfilled(null, ''))
+      expect(newStateFulfilled.profileUser).toBeNull()
+      expect(newStateFulfilled.isSessionChecked).toBe(true)
+    })
+
+    test('проверяем работу rejected', () => {
+      const newStateRejected = userSlice(initialState, restoreSession.rejected(new Error(), ''))
+      expect(newStateRejected.profileUser).toBeNull()
+      expect(newStateRejected.isSessionChecked).toBe(true)
+    })
+
+    describe('restoreSession: ветвления asyncThunk', () => {
+      beforeEach(() => {
+        mockedGetAuthTokens.mockReset()
+        mockedGetMeApi.mockReset()
+        mockedClearAuthTokens.mockReset()
+      })
+
+      test('без токена не вызывает getMeApi и возвращает null', async () => {
+        mockedGetAuthTokens.mockReturnValue(null)
+
+        const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
+
+        expect(mockedGetMeApi).not.toHaveBeenCalled()
+        expect(result.type).toBe('user/restoreSession/fulfilled')
+        expect(result.payload).toBeNull()
+      })
+
+      test('с токеном заполняет профиль из getMeApi', async () => {
+        mockedGetAuthTokens.mockReturnValue({
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        })
+        mockedGetMeApi.mockResolvedValue(testListUsers[0])
+
+        const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
+
+        expect(mockedGetMeApi).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/restoreSession/fulfilled')
         expect(result.payload).toEqual(testListUsers[0])
       })
-      test('loginUser не нашел пользователя в store и идет в localStorage', async () => {
-        const dispatch = jest.fn()
-        const getState = jest.fn(() => ({
-          user: {
-            ...initialState,
-            allUsers: [],
-          },
-        }))
-        const spyUser = testListUsers[1]
-        localStorage.setItem('draftUser', JSON.stringify(spyUser))
 
-        if (spyUser.email === undefined) return
-        if (spyUser.password === undefined) return
-        const thunk = loginUser({
-          email: spyUser.email,
-          password: spyUser.password,
+      test('при 401 возвращает null и не очищает токены сам', async () => {
+        mockedGetAuthTokens.mockReturnValue({
+          accessToken: 'expired-token',
+          refreshToken: 'refresh-token',
         })
+        mockedGetMeApi.mockRejectedValue(new RequestError(401, 'Unauthorized'))
 
-        const result = await thunk(dispatch, getState, undefined)
-        expect(result.payload).toEqual(spyUser)
-      })
-      test('loginUser не нашел пользователя нигде', async () => {
-        const dispatch = jest.fn()
-        const getState = jest.fn(() => ({
-          user: {
-            ...initialState,
-            allUsers: [],
-          },
-        }))
-        localStorage.removeItem('draftUser')
+        const result = await restoreSession()(jest.fn(), jest.fn(), undefined)
 
-        const thunk = loginUser({
-          email: 'okak@mail.ru',
-          password: '1234567890',
-        })
-
-        const result = await thunk(dispatch, getState, undefined)
-        expect(result.type).toBe('user/loginUser/rejected')
+        expect(mockedClearAuthTokens).not.toHaveBeenCalled()
+        expect(result.type).toBe('user/restoreSession/fulfilled')
+        expect(result.payload).toBeNull()
       })
     })
   })
@@ -354,14 +461,54 @@ describe('Проверяем работу userSlice', () => {
     })
 
     test('проверяем работу fulfilled', () => {
-      const newStateFulfilled = userSlice(initialState, logoutUser.fulfilled(true, ''))
+      const newStateFulfilled = userSlice(initialState, logoutUser.fulfilled(undefined, ''))
       expect(newStateFulfilled).toEqual(stateLogoutUserFulfilled)
     })
 
     test('проверяем работу rejected fallback', () => {
-      const newStateRejected = userSlice(initialState, logoutUser.rejected(new Error(), ''))
+      const loggedInState = {
+        ...initialState,
+        profileUser: testListUsers[0],
+      }
+      const newStateRejected = userSlice(loggedInState, logoutUser.rejected(new Error(), ''))
+      expect(newStateRejected.profileUser).toBeNull()
       expect(newStateRejected.errorLogout).toBe('Не удалось выйти из аккаунта')
       expect(newStateRejected.isLoadingLogout).toBe(false)
+    })
+
+    describe('logoutUser: ветвления asyncThunk', () => {
+      beforeEach(() => {
+        mockedLogoutApi.mockReset()
+        mockedClearAuthTokens.mockReset()
+      })
+
+      test('logoutUser вызывает API и очищает токены', async () => {
+        const dispatch = jest.fn()
+        const getState = jest.fn()
+        mockedLogoutApi.mockResolvedValue({ message: 'Успешный выход' })
+
+        const result = await logoutUser()(dispatch, getState, undefined)
+
+        expect(mockedLogoutApi).toHaveBeenCalledTimes(1)
+        expect(mockedClearAuthTokens).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/logoutUser/fulfilled')
+      })
+
+      test('logoutUser очищает токены даже при сетевом сбое', async () => {
+        const dispatch = jest.fn()
+        const getState = jest.fn()
+        mockedLogoutApi.mockRejectedValue(
+          new RequestError(null, 'Не удалось выполнить запрос. Проверьте подключение к сети.'),
+        )
+
+        const result = await logoutUser()(dispatch, getState, undefined)
+
+        expect(mockedClearAuthTokens).toHaveBeenCalledTimes(1)
+        expect(result.type).toBe('user/logoutUser/rejected')
+        expect('error' in result && result.error.message).toBe(
+          'Не удалось выполнить запрос. Проверьте подключение к сети.',
+        )
+      })
     })
   })
   describe('toggleFavorite', () => {

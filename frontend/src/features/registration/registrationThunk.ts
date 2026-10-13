@@ -18,6 +18,14 @@ const readServerError = (error: unknown): string => {
   return 'Не удалось зарегистрировать пользователя'
 }
 
+export { buildRegisterDto } from './buildRegisterDto'
+export type {
+  TRegisterDto,
+  TRegisterDraftUser,
+  TRegisterSkillDto,
+  TRegisterWantToLearn,
+} from './buildRegisterDto'
+
 //вызфваем так dispatch(completeRegistration()) - даже ничего внутрь передавать не надо, thunk сделает все за вас,
 //  главное - записывать в стор draftUser и draftSkill
 export const completeRegistration = createAsyncThunk<
