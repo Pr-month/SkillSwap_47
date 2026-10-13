@@ -12,6 +12,7 @@ import { CitiesModule } from './cities/cities.module';
 import { appConfig } from './config/app.config';
 import { databaseConfig, type IDatabaseConfig } from './config/db.config';
 import { jwtConfig } from './config/jwt.config';
+import { yandexConfig } from './config/yandex.config';
 import { IMailConfig, mailConfig } from './config/mail.config';
 import { GendersModule } from './genders/genders.module';
 import { MailModule } from './mail/mail.module';
@@ -25,7 +26,7 @@ import { UsersModule } from './users/users.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, appConfig, jwtConfig, mailConfig],
+      load: [databaseConfig, appConfig, jwtConfig, yandexConfig, mailConfig],
     }),
     MailerModule.forRootAsync({
       imports: [ConfigModule],
