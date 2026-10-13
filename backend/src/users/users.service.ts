@@ -70,10 +70,15 @@ export class UsersService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    const passwordValid = await bcrypt.compare(dto.oldPassword, user.password);
+    if (user.password) {
+      const passwordValid = await bcrypt.compare(
+        dto.oldPassword,
+        user.password,
+      );
 
-    if (!passwordValid) {
-      throw new UnauthorizedException('Неверный текущий пароль');
+      if (!passwordValid) {
+        throw new UnauthorizedException('Неверный текущий пароль');
+      }
     }
 
     const password = await bcrypt.hash(dto.newPassword, this.appCfg.saltRounds);
