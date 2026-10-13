@@ -69,8 +69,8 @@ export class SkillsController {
 
   @Get(':id')
   @ApiFindSkill()
-  findOne(@Param('id') id: string) {
-    return this.skillsService.findOne(id);
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.skillsService.findById(id);
   }
 
   @Patch(':id')

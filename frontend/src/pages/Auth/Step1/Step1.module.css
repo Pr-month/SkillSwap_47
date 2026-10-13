@@ -1,0 +1,92 @@
+.formCard {
+  display: flex;
+  align-items: center;
+}
+
+.form {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.socialButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.socialButton {
+  width: 100%;
+  gap: 10px;
+}
+
+.divider {
+  margin: 24px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #69735d;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #e4e8df;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 32px;
+}
+
+/* .nextLink {
+  text-decoration: none;
+} */
+
+.hintIcon {
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+  display: block;
+  object-fit: contain;
+}
+
+.loginContainer {
+  display: flex;
+  width: 100%;
+  margin-top: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.loginText {
+  margin: 0;
+  color: #253017;
+  font-size: 16px;
+  line-height: 24px;
+  cursor: default;
+}
+
+.loginButton {
+  background: transparent !important;
+  border: none;
+  color: #508826;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+  transition: opacity 0.2s;
+}
+
+.loginButton:hover {
+  opacity: 0.7;
+}

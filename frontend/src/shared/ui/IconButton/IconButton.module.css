@@ -1,0 +1,19 @@
+.iconButton {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  color: currentcolor;
+  outline: none;
+}
+
+.iconButton:hover,
+.iconButton:active {
+  opacity: 0.8;
+}

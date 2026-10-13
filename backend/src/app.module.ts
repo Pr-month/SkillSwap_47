@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { MailerModule } from '@nestjs-modules/mailer';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -12,18 +13,25 @@ import { appConfig } from './config/app.config';
 import { databaseConfig, type IDatabaseConfig } from './config/db.config';
 import { jwtConfig } from './config/jwt.config';
 import { yandexConfig } from './config/yandex.config';
+import { IMailConfig, mailConfig } from './config/mail.config';
 import { GendersModule } from './genders/genders.module';
-import { SkillsModule } from './skills/skills.module';
-import { UsersModule } from './users/users.module';
-import { UploadModule } from './upload/upload.module';
+import { MailModule } from './mail/mail.module';
 import { NotificationModule } from './notification/notification.module';
 import { RequestsModule } from './requests/requests.module';
+import { SkillsModule } from './skills/skills.module';
+import { UploadModule } from './upload/upload.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, appConfig, jwtConfig, yandexConfig],
+      load: [databaseConfig, appConfig, jwtConfig, yandexConfig, mailConfig],
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: IMailConfig) => config,
+      inject: [mailConfig.KEY],
     }),
     ThrottlerModule.forRoot([
       {
@@ -48,6 +56,7 @@ import { RequestsModule } from './requests/requests.module';
     UploadModule,
     RequestsModule,
     NotificationModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [

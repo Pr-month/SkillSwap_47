@@ -1,0 +1,311 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useAppSelector } from '../../app/store/store'
+import type { TSkill, TSubcategory, TUser } from '../../shared/utils/types'
+import { Button } from '../../shared/ui/Button'
+import { IconButton } from '../../shared/ui/IconButton'
+import { SkillCard } from '../../widgets/SkillCard'
+import { UserList } from '../../widgets/UserList/UserList'
+import { UserCard } from '../../widgets/UserCard'
+import { ExchangeOfferedModal } from '../../widgets/Modals/ExchangeOfferedModal'
+import styles from './Skill.module.css'
+// import likeOutlineIcon from '../../shared/assets/icons/like-outline.png'
+import shareIcon from '../../shared/assets/icons/share.png'
+import moreSquareIcon from '../../shared/assets/icons/more-square.png'
+import { useAppDispatch } from '../../app/store/store'
+import { toggleFavorite } from '../../entities/user/model/userSlice'
+import { addToSwap } from '../../entities/Skill/model/skillSlice'
+import { getSkillByIdApi } from '../../api/skillsApi'
+import { RequestError } from '../../api/base'
+import clsx from 'clsx'
+
+const FALLBACK_IMAGE = '/placeholder.svg'
+
+type TPageStatus = 'loading' | 'ready' | 'notFound' | 'error'
+
+const getSafeSubcategories = (
+  wantedIds: string[] | undefined,
+  allSubcategories: TSubcategory[],
+): TSubcategory[] => {
+  const selected = (wantedIds || [])
+    .map((id) => allSubcategories.find((sub) => sub.id === id))
+    .filter((sub): sub is TSubcategory => Boolean(sub))
+
+  if (selected.length >= 2) {
+    return selected
+  }
+
+  const fallback = allSubcategories.filter(
+    (sub) => !selected.some((existing) => existing.id === sub.id),
+  )
+  return [...selected, ...fallback].slice(0, 2)
+}
+
+const SkillPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+
+  const [fetchedSkill, setFetchedSkill] = useState<TSkill | null>(null)
+  const [user, setUser] = useState<TUser | null>(null)
+  const [status, setStatus] = useState<TPageStatus>('loading')
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const allSubcategories = useAppSelector((state) => state.skill.allSubcategories)
+  const allCategories = useAppSelector((state) => state.skill.allCategories)
+  const profileUser = useAppSelector((state) => state.user.profileUser)
+  const profileSkill = useAppSelector((state) => state.skill.isForSwap)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadSkill = async () => {
+      if (!id) {
+        setFetchedSkill(null)
+        setUser(null)
+        setStatus('notFound')
+        setErrorMessage(null)
+        return
+      }
+
+      setStatus('loading')
+      setFetchedSkill(null)
+      setUser(null)
+      setErrorMessage(null)
+
+      try {
+        const { skill: nextSkill, owner } = await getSkillByIdApi(id)
+        if (cancelled) return
+
+        setFetchedSkill(nextSkill)
+        setUser(owner)
+        setStatus('ready')
+      } catch (error) {
+        if (cancelled) return
+
+        if (
+          error instanceof RequestError &&
+          (error.status === 404 || error.status === 400)
+        ) {
+          setStatus('notFound')
+          setErrorMessage(null)
+          return
+        }
+
+        setStatus('error')
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : 'Не удалось загрузить навык. Попробуйте позже.',
+        )
+      }
+    }
+
+    void loadSkill()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  const skill = useMemo(() => {
+    if (!fetchedSkill) return null
+    const parentId = allSubcategories.find(
+      (sub) => sub.id === fetchedSkill.subcategoryId,
+    )?.categoryId
+    return parentId ? { ...fetchedSkill, categoryId: parentId } : fetchedSkill
+  }, [fetchedSkill, allSubcategories])
+
+  const userSubcategories = useMemo(
+    () => getSafeSubcategories(user?.subcategoriesWanted, allSubcategories),
+    [user?.subcategoriesWanted, allSubcategories],
+  )
+
+  const categoryText = useMemo(() => {
+    if (!skill) return ''
+
+    const categoryTitle = allCategories.find((category) => category.id === skill.categoryId)?.name
+    const subcategoryTitle = allSubcategories.find(
+      (subcategory) => subcategory.id === skill.subcategoryId,
+    )?.name
+
+    return [categoryTitle, subcategoryTitle].filter(Boolean).join(' / ')
+  }, [skill, allCategories, allSubcategories])
+
+  const [uiLiked, setUiLiked] = useState<boolean | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const isLikedFromStore = user?.id
+    ? (profileUser?.favoritesUserId?.includes(user.id) ?? false)
+    : false
+  const isLiked = uiLiked ?? isLikedFromStore
+  const isForSwap = profileUser && skill?.id ? profileSkill?.includes(skill.id) : false
+  const localUser = localStorage.getItem('draftUser')
+  const localUserId = localUser ? JSON.parse(localUser).id : null
+  const isLocalProfileUser = profileUser?.id === localUserId
+
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+
+    if (!profileUser) {
+      navigate('/login')
+    }
+
+    const userId = user?.id
+    if (!userId) return
+
+    if (isLocalProfileUser) {
+      dispatch(toggleFavorite(userId))
+      return
+    }
+
+    setUiLiked((prev) => (prev === null ? !isLiked : !prev))
+    console.log('like', isLiked, isLocalProfileUser)
+  }
+
+  if (status === 'loading') {
+    return (
+      <section className={styles.page}>
+        <div className={styles.notFoundCard}>
+          <h1 className={styles.notFoundTitle}>Идет загрузка навыка</h1>
+          <p className={styles.notFoundText}>
+            Гружусь и очень стараюсь. Пожалуйста, подождите, еще немного...
+          </p>
+        </div>
+      </section>
+    )
+  }
+
+  if (status === 'notFound') {
+    return (
+      <section className={styles.page}>
+        <div className={styles.notFoundCard}>
+          <h1 className={styles.notFoundTitle}>Навык не найден</h1>
+          <p className={styles.notFoundText}>
+            Проверьте корректность ссылки или выберите другой навык.
+          </p>
+          <Link to="/">
+            <Button>На главную</Button>
+          </Link>
+        </div>
+      </section>
+    )
+  }
+
+  if (status === 'error' || !skill || !user) {
+    return (
+      <section className={styles.page}>
+        <div className={styles.notFoundCard}>
+          <h1 className={styles.notFoundTitle}>Не удалось загрузить навык</h1>
+          <p className={styles.notFoundText}>
+            {errorMessage ?? 'Проверьте подключение к сети и попробуйте ещё раз.'}
+          </p>
+          <Link to="/">
+            <Button>На главную</Button>
+          </Link>
+        </div>
+      </section>
+    )
+  }
+
+  const handleOfferClick = () => {
+    if (!profileUser) {
+      navigate('/login')
+      return
+    }
+    const skillId = skill?.id
+    if (!skillId) return
+
+    dispatch(addToSwap(skillId))
+    setIsModalOpen(true)
+  }
+
+  return (
+    <section className={styles.page}>
+      <div className={styles.topSection}>
+        <UserCard
+          variant="detailed"
+          user={user}
+          skill={skill}
+          subcategories={userSubcategories}
+          className={styles.userCard}
+        />
+
+        <div className={styles.skillColumn}>
+          <div className={styles.actions}>
+            <IconButton
+              icon={
+                <img
+                  src={
+                    isLiked
+                      ? '/src/shared/assets/icons/HeartFilled.png'
+                      : '/src/shared/assets/icons/HeartIcon.png'
+                  }
+                  alt="избранное"
+                />
+              }
+              type="button"
+              className={styles.actionButton}
+              aria-label="Добавить в избранное"
+              onClick={handleLikeClick}
+            />
+            <IconButton
+              icon={<img src={shareIcon} alt="поделиться" />}
+              type="button"
+              aria-label="Поделиться"
+              className={styles.actionButton}
+            />
+            <IconButton
+              icon={<img src={moreSquareIcon} alt="дополнительно" />}
+              type="button"
+              aria-label="Дополнительные действия"
+              className={styles.actionButton}
+            />
+          </div>
+
+          <SkillCard
+            title={skill.title}
+            category={categoryText}
+            description={skill.description}
+            images={skill.imagesUrl.length > 0 ? skill.imagesUrl : [FALLBACK_IMAGE]}
+          >
+            {/* <Button className={styles.exchangeButton} onClick={handleOfferClick} disabled={isForSwap} >
+              Предложить обмен
+            </Button> */}
+            <Button
+              variant={isForSwap ? 'secondary' : 'primary'}
+              // disabled={isForSwap}
+              onClick={handleOfferClick}
+              className={clsx(styles.exchangeButton, {
+                [styles.activeSwap]: isForSwap,
+              })}
+              disabled={isForSwap}
+            >
+              {isForSwap ? (
+                <>
+                  <img
+                    src="/src/shared/assets/icons/time.png"
+                    alt="иконка обмена"
+                    className={styles.icon}
+                  />
+                  <span>Обмен предложен</span>
+                </>
+              ) : (
+                'Предложить обмен'
+              )}
+            </Button>
+          </SkillCard>
+        </div>
+      </div>
+
+      <UserList
+        variant="skillpage"
+        currentCategoryId={skill.categoryId}
+        currentUserId={skill.userId}
+      />
+      <ExchangeOfferedModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    </section>
+  )
+}
+
+export default SkillPage

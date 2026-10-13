@@ -11,7 +11,6 @@ import { Category } from './entities/category.entity';
 
 describe('CategoriesService', () => {
   let service: CategoriesService;
-  let count: jest.Mock;
   let find: jest.Mock;
   let findOne: jest.Mock;
   let create: jest.Mock;
@@ -19,7 +18,6 @@ describe('CategoriesService', () => {
   let remove: jest.Mock;
 
   beforeEach(async () => {
-    count = jest.fn();
     find = jest.fn();
     findOne = jest.fn();
     create = jest.fn((payload: Partial<Category>) => payload as Category);
@@ -32,7 +30,6 @@ describe('CategoriesService', () => {
         {
           provide: getRepositoryToken(Category),
           useValue: {
-            count,
             find,
             findOne,
             create,
@@ -154,13 +151,13 @@ describe('CategoriesService', () => {
       findOne.mockResolvedValue(category);
       save.mockResolvedValue({ ...category, name: 'Новое' });
 
-      await expect(
-        service.update('cat-1', { name: 'Новое' }),
-      ).resolves.toEqual({
-        id: 'cat-1',
-        name: 'Новое',
-        parentId: null,
-      });
+      await expect(service.update('cat-1', { name: 'Новое' })).resolves.toEqual(
+        {
+          id: 'cat-1',
+          name: 'Новое',
+          parentId: null,
+        },
+      );
     });
 
     it('moves category under a valid root parent', async () => {
@@ -175,9 +172,7 @@ describe('CategoriesService', () => {
         name: 'Новый корень',
         parent: null,
       } as unknown as Category;
-      findOne
-        .mockResolvedValueOnce(category)
-        .mockResolvedValueOnce(newParent);
+      findOne.mockResolvedValueOnce(category).mockResolvedValueOnce(newParent);
       save.mockImplementation((entity: Category) => entity);
 
       await expect(
@@ -338,38 +333,6 @@ describe('CategoriesService', () => {
       await expect(service.findById('missing')).rejects.toBeInstanceOf(
         BadRequestException,
       );
-    });
-  });
-
-  describe('onModuleInit', () => {
-    it('skips seeding when categories already exist', async () => {
-      count.mockResolvedValue(5);
-
-      await service.onModuleInit();
-
-      expect(save).not.toHaveBeenCalled();
-    });
-
-    it('seeds categories when repository is empty', async () => {
-      count.mockResolvedValue(0);
-      save.mockImplementation((entity: Category | Category[]) => entity);
-
-      await service.onModuleInit();
-
-      expect(create).toHaveBeenCalled();
-      expect(save).toHaveBeenCalled();
-    });
-
-    it('logs a warning when seeding fails', async () => {
-      count.mockRejectedValue(new Error('connection lost'));
-      const warn = jest
-        .spyOn((service as unknown as { logger: { warn: () => void } }).logger, 'warn')
-        .mockImplementation(() => undefined);
-
-      await service.onModuleInit();
-
-      expect(warn).toHaveBeenCalled();
-      warn.mockRestore();
     });
   });
 });

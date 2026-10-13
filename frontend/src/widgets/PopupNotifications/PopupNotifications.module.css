@@ -1,0 +1,56 @@
+.container {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  top: 104px;
+  right: 36px;
+  z-index: 1000;
+  padding: 60px;
+  background-color: white;
+  border: 1px solid rgb(105 115 93);
+  border-radius: 12px;
+  width: 556px;
+}
+
+.notificationsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.notificationsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notificationsTitle {
+  font-family: Jost, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 28px;
+}
+
+.button {
+  width: fit-content;
+  padding: 0;
+  color: rgb(80 136 38);
+}
+
+.notificationsList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.viewedNotificationItem {
+  max-height: 40px;
+}
+
+.noNotifications {
+  font-family: Roboto, sans-serif;
+  font-style: italic;
+  color: rgb(105 115 93);
+}

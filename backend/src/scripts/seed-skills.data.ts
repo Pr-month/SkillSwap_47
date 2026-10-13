@@ -14,10 +14,10 @@ export const SKILLS_SEED = [
     subcategoryName: 'Йога и медитация',
   },
   {
-    title: 'Гитара с нуля',
+    title: 'Осознанная медитация',
     description: 'Аккорды и простые песни для начинающих',
     ownerEmail: 'maria@skillswap.local',
-    categoryName: 'Муз. инструменты',
-    subcategoryName: 'Игра на гитаре',
+    categoryName: 'Здоровье и лайфстайл',
+    subcategoryName: 'Осознанность',
   },
 ] as const;

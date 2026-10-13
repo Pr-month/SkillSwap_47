@@ -1,0 +1,39 @@
+.container {
+  max-width: 436px;
+  font-family: Roboto, sans-serif;
+}
+
+.infoContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.textContainer {
+  margin-left: 8px;
+  height: auto;
+}
+
+.title {
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+}
+
+.date {
+  margin-left: auto;
+  display: block;
+  line-height: 24px;
+  align-self: self-start;
+  color: rgb(105 115 93);
+}
+
+.description {
+  font-size: 12px;
+  line-height: 16px;
+}

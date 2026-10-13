@@ -14,7 +14,8 @@ export const databaseConfig = registerAs(
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
-    synchronize: process.env.NODE_ENV !== 'production',
+    migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+    synchronize: false,
     logging: false,
     ssl:
       process.env.NODE_ENV === 'test' ? false : { rejectUnauthorized: false },

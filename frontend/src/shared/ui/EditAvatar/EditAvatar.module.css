@@ -1,0 +1,60 @@
+.editAvatar {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+}
+
+.avatarWrapper {
+  position: relative;
+  display: flex;
+  width: 244px;
+  height: 244px;
+}
+
+.avatarImage,
+.avatarFallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.avatarImage {
+  display: block;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f9faf7;
+}
+
+.avatarIcon {
+  width: 244px;
+  height: 244px;
+}
+
+.editButton {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  right: 0;
+  bottom: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #deebc5;
+}
+
+.editIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.input {
+  display: none;
+}

@@ -1,0 +1,95 @@
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  font-family: Roboto, Arial, sans-serif;
+  font-weight: 400;
+  padding-bottom: 172px;
+}
+
+.stepHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.stepTitle {
+  margin: 0 0 16px;
+  text-align: center;
+  color: #1d2418;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 500;
+}
+
+.stepProgress {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 216px;
+}
+
+.stepBar {
+  flex: 1;
+  height: 5px;
+  border-radius: 8px;
+  background: #e6ede1;
+}
+
+.stepBarActive {
+  flex: 1;
+  height: 5px;
+  border-radius: 8px;
+  background: #a3d179;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  margin: 0 152px;
+  gap: 24px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  min-height: 540px;
+  padding: 98px 32px;
+}
+
+.supportCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.supportContent {
+  max-width: 353px;
+}
+
+.supportTitle {
+  margin: 51px 0 12px;
+  color: #253017;
+  font-family: Jost, Arial, sans-serif;
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 500;
+}
+
+.supportText {
+  margin: 0;
+  color: #253017;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+@media (width <= 960px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    min-height: auto;
+  }
+}
