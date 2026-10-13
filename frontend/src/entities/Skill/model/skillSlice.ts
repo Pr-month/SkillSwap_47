@@ -97,6 +97,9 @@ const skillSlice = createSlice({
     addToSwap(state, action: PayloadAction<string>) {
       state.isForSwap.push(action.payload)
     },
+    setProfileSkill(state, action: PayloadAction<TSkill>) {
+      state.profileSkill = action.payload
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -105,7 +108,9 @@ const skillSlice = createSlice({
         state.error = null
       })
       .addCase(getAllSkills.fulfilled, (state, action: PayloadAction<TSkill[]>) => {
-        const subById = new Map(state.allSubcategories.map((s) => [s.id, s]))
+        const subById = new Map<string, TSubcategory>(
+          state.allSubcategories.map((s) => [s.id, s] as [string, TSubcategory]),
+        )
         state.allSkills = action.payload.map((skill) => {
           const parentId = subById.get(skill.subcategoryId)?.categoryId
           return parentId ? { ...skill, categoryId: parentId } : skill
@@ -123,7 +128,9 @@ const skillSlice = createSlice({
       .addCase(getAllCategories.fulfilled, (state, action: PayloadAction<TCategory[]>) => {
         state.allCategories = action.payload
         state.allSubcategories = flattenCategoriesToSubcategories(action.payload)
-        const subById = new Map(state.allSubcategories.map((s) => [s.id, s]))
+        const subById = new Map<string, TSubcategory>(
+          state.allSubcategories.map((s) => [s.id, s] as [string, TSubcategory]),
+        )
         state.allSkills = state.allSkills.map((skill) => {
           const parentId = subById.get(skill.subcategoryId)?.categoryId
           return parentId ? { ...skill, categoryId: parentId } : skill
@@ -173,5 +180,5 @@ const skillSlice = createSlice({
   },
 })
 
-export const { updateDraftSkill, resetDraftSkill, addToSwap } = skillSlice.actions
+export const { updateDraftSkill, resetDraftSkill, addToSwap, setProfileSkill } = skillSlice.actions
 export default skillSlice.reducer

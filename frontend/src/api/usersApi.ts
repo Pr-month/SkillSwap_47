@@ -30,7 +30,7 @@ type TBackendUser = {
 const mapFavoriteIds = (favorites?: Array<TBackendSkillBrief | string>): string[] =>
   (favorites ?? []).map((item) => (typeof item === 'string' ? item : item.id))
 
-const mapUser = (user: TBackendUser): TUser => ({
+export const mapUser = (user: TBackendUser): TUser => ({
   id: user.id,
   name: user.name,
   city: user.city,

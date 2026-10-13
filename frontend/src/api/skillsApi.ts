@@ -69,10 +69,12 @@ type TBackendSimilarUser = {
   skills?: TBackendSimilarSkill[]
 }
 
-const mapSkill = (skill: TBackendSkill | TBackendSkillDetail | TBackendSimilarSkill, userId = ''): TSkill => {
+export const mapSkill = (
+  skill: TBackendSkill | TBackendSkillDetail | TBackendSimilarSkill,
+  userId = '',
+): TSkill => {
   const subcategoryId = skill.category?.id ?? ''
-  const ownerId =
-    'owner' in skill && skill.owner?.id ? skill.owner.id : userId
+  const ownerId = 'owner' in skill && skill.owner?.id ? skill.owner.id : userId
   return {
     id: skill.id,
     // parent category подставится в skillSlice после flatten категорий
