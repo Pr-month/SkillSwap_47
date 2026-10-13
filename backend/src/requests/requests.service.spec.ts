@@ -9,6 +9,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { RequestStatus } from '../common/enums/request-status.enum';
 import { Roles } from '../common/enums/user-role.enum';
 import { NotificationsGateway } from '../notification/notifications.gateway';
+import { MailService } from '../mail/mail.service';
 import { SkillsService } from '../skills/skills.service';
 import { SkillRequest } from './entities/request.entity';
 import { RequestsService } from './requests.service';
@@ -22,6 +23,7 @@ describe('RequestsService', () => {
   let save: jest.Mock;
   let remove: jest.Mock;
   let notifyUser: jest.Mock;
+  let sendUserNotification: jest.Mock;
 
   beforeEach(async () => {
     findById = jest.fn();
@@ -33,6 +35,7 @@ describe('RequestsService', () => {
     save = jest.fn();
     remove = jest.fn();
     notifyUser = jest.fn();
+    sendUserNotification = jest.fn().mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,6 +51,10 @@ describe('RequestsService', () => {
         {
           provide: NotificationsGateway,
           useValue: { notifyUser },
+        },
+        {
+          provide: MailService,
+          useValue: { sendUserNotification },
         },
       ],
     }).compile();
@@ -73,7 +80,7 @@ describe('RequestsService', () => {
       const created = {
         id: 'request-1',
         sender: { id: 'sender-1', name: 'Анна' },
-        receiver: { id: 'receiver-1' },
+        receiver: { id: 'receiver-1', email: 'receiver@mail.com' },
         requestedSkill: { title: 'Гитара' },
       };
 
@@ -100,6 +107,10 @@ describe('RequestsService', () => {
         type: 'new',
         skillName: 'Гитара',
         fromUser: 'Анна',
+      });
+      expect(sendUserNotification).toHaveBeenCalledWith('receiver@mail.com', {
+        subject: 'Новая заявка на SkillSwap',
+        text: 'Анна отправил(а) вам заявку по навыку «Гитара».',
       });
       expect(result).toEqual(created);
     });
@@ -178,7 +189,7 @@ describe('RequestsService', () => {
           status: RequestStatus.PENDING,
           isRead: false,
           receiver: { id: 'receiver-1', name: 'Иван' },
-          sender: { id: 'sender-1', name: 'Анна' },
+          sender: { id: 'sender-1', name: 'Анна', email: 'sender@mail.com' },
           requestedSkill: { title: 'Гитара' },
         };
         findOne.mockResolvedValue(request);
@@ -204,8 +215,15 @@ describe('RequestsService', () => {
             skillName: 'Гитара',
             fromUser: 'Иван',
           });
+          const statusLabel =
+            status === RequestStatus.ACCEPTED ? 'принята' : 'отклонена';
+          expect(sendUserNotification).toHaveBeenCalledWith('sender@mail.com', {
+            subject: 'Обновление заявки на SkillSwap',
+            text: `Иван ${statusLabel} вашу заявку по навыку «Гитара».`,
+          });
         } else {
           expect(notifyUser).not.toHaveBeenCalled();
+          expect(sendUserNotification).not.toHaveBeenCalled();
         }
       },
     );
